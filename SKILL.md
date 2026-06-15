@@ -1,17 +1,18 @@
 ---
 name: non-visual-mode
 description: >-
-  Set up the session to produce output that is comfortable to consume
-  non-visually — by screen reader, braille display, or text-to-speech — then keep
-  formatting every reply that way for the rest of the
-  conversation. Use this WHENEVER a user signals they consume responses by ear or
-  with assistive tech — they say they use a screen reader, are blind or low-vision,
-  mention VoiceOver, NVDA, JAWS, Orca, Narrator, or TalkBack, or ask for
-  "accessible", "screen-reader-friendly", or "audio-friendly" answers — even said
-  in passing and even if no task is attached. Also use it when a user complains
-  that your output is hard to listen to, that markdown symbols, tables, or emoji
-  are noisy to hear, or that replies are too long to navigate by ear. This skill
-  triggers on a fact about the *user*, not on a task verb, so lean toward using it.
+  Reformat the session's replies for non-visual consumption — screen reader,
+  braille display, or text-to-speech — and keep them that way for the rest of the
+  conversation. This is an explicit opt-in: use it when the user invokes it by name
+  or directly asks you to make your output non-visual, screen-reader-friendly,
+  accessible, or audio-friendly. Because it changes formatting for the whole rest
+  of the session, do NOT switch it on just because a screen reader, braille,
+  VoiceOver, NVDA, JAWS, Orca, Narrator, or TalkBack happens to be mentioned —
+  passing, hypothetical, and third-party mentions ("my coworker uses a screen
+  reader", "is this chart accessible?", general accessibility questions) are not
+  requests to reformat. If the user says they themselves use assistive tech but
+  hasn't clearly asked you to adapt, OFFER to turn non-visual formatting on and
+  wait for confirmation rather than assuming.
 ---
 
 # Non-visual mode
