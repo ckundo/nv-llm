@@ -1,28 +1,43 @@
 # non-visual-mode
 
-A Claude [skill](https://docs.claude.com/en/docs/claude-code/skills) that sets up a session to produce output comfortable to consume **non-visually** — by screen reader, braille display, or text-to-speech — and then keeps formatting every reply that way for the rest of the conversation.
+A Claude [skill](https://docs.claude.com/en/docs/claude-code/skills) that makes the assistant's answers easy to use **without looking at the screen** — for people who read with a screen reader, a braille display, or text-to-speech.
 
-It triggers on a fact about the *user* ("I use a screen reader", "I'm blind", VoiceOver / NVDA / JAWS, "make this accessible"), not on a task verb. Once on, it formats by ear: lead with the answer, real headings and ordered lists, **no tables** (prose with the label repeated per value), **no ASCII charts** (describe the data and trend in words, offer images with standalone alt text), describe code before showing it, no decorative emoji, descriptive link text, no visual deixis ("as you can see").
+When someone mentions they use a screen reader (or names VoiceOver, NVDA, JAWS, and so on), the skill switches Claude into a mode that keeps every reply easy to *listen to*: it puts the answer first, uses real headings and numbered lists you can move through, and avoids the things that are painful to hear — tables (a screen reader reads them as a stream of "vertical bar, vertical bar…"), charts drawn out of text characters, piles of emoji, raw web links, and big blocks of code with no explanation.
 
-## Results
+## What we tested
 
-Three-way ablation on 5 prompts that deliberately bait the anti-patterns (a comparison that tempts a table, a chart request, a code dump, a wall of text). Same rubric (5 assertions per eval), one run per condition.
+We asked Claude the same 5 everyday questions — compare some developer tools, explain how OAuth login works, write a small Python function, summarize an accessibility standard, and "chart" four quarters of revenue — and we asked each one three different ways:
 
-| Condition | Pass rate |
+1. **With the skill turned on.**
+2. **With no skill, but telling Claude "I use a screen reader."**
+3. **With nothing — just the plain question.**
+
+Then we checked each answer for the things that matter when you're listening instead of looking. Does it lead with the answer? Does it skip tables and text-art charts? Does it use a real numbered list for steps? Does it describe a chart in words and offer an image with a written description? Five checks per question.
+
+## What we found
+
+| How Claude was asked | Checks passed |
 |---|---|
-| **`non-visual-mode` skill (32 lines)** | **100%** (25/25) |
-| Just saying *"I use a screen reader"* (no skill) | 76% (19/25) |
-| No skill, no disclosure | 56% (14/25) |
+| **With the `non-visual-mode` skill** | **25 of 25 — 100%** |
+| Just saying "I use a screen reader" | 19 of 25 — 76% |
+| Nothing special | 14 of 25 — 56% |
 
-The bare disclosure already gets Claude most of the way, but it's inconsistent case-to-case (3/5–5/5): it produced both a markdown table *and* an ASCII bar chart on the revenue prompt, and gave the OAuth steps as prose instead of a navigable ordered list. The skill closes that gap on exactly the high-impact cases and stays 5/5 every time, for ~1k extra tokens per turn.
+In plain terms:
 
-The full interactive results (every output under each condition + the benchmark) are published on the [`gh-pages`](../../tree/gh-pages) branch / GitHub Pages site.
+- **Just saying "I use a screen reader" already helps a lot.** Claude adjusts on its own — it shortens things, adds headings, drops emoji.
+- **But it's hit-or-miss.** On the revenue question it produced *both* a table *and* a chart drawn in text characters — two of the worst things to hear. On the OAuth question it wrote the steps as plain paragraphs instead of a real numbered list you can step through. Good on average, but unpredictable from one question to the next.
+- **The skill makes it reliable.** It passed every check on every question and consistently avoided the painful patterns — for about a sentence's worth of extra instructions per turn.
 
-## Layout
+So the point of the skill isn't to teach Claude something it can't do — it's to make Claude do it *every time*, so the person doesn't have to keep asking and hoping.
 
-- **`non-visual-mode/`** — the skill (`SKILL.md` + `evals/evals.json`).
-- **`screen-reader-mode-workspace/`** — eval harness output: iterations 1–4, each with per-condition responses, gradings, and a benchmark. `skill-snapshot-full/` holds the earlier 186-line version before it was pared to 32 lines.
+**[See every answer side by side →](https://ckundo.github.io/nv-llm/)**
 
-## Method & caveats
+## A fair word about the numbers
 
-Each condition was run by an independent subagent producing the assistant reply for a fixed prompt; outputs were graded against per-eval assertions — objective checks (no tables / ASCII art / emoji; headings and ordered lists present) plus judgment calls (answer-first, code-described-before-block, counts stated in words, standalone alt text). **n = 1 per cell, a single model, and the same 5 prompts the skill was shaped against** — so treat the numbers as directional, not a significance test. Built and evaluated with the [skill-creator](https://github.com/anthropics/skills) harness.
+This was a small, quick test: one answer per question per method, one version of Claude, and the same five questions the skill was tuned on. That's enough to show a clear, believable difference — but it isn't a formal study, so read the percentages as a strong hint, not proof. A bigger test (more questions, several runs each) would firm them up.
+
+## What's in this repo
+
+- **`non-visual-mode/`** — the skill itself.
+- **The [results page](https://ckundo.github.io/nv-llm/)** (published from the `gh-pages` branch) — every answer from all three methods, side by side, plus the scorecard.
+- **`screen-reader-mode-workspace/`** — the raw runs behind the numbers.
