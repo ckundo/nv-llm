@@ -16,11 +16,11 @@ Then I checked each answer for the things that matter when you're listening inst
 
 ## What I found
 
-| How Claude was asked | Checks passed |
-|---|---|
-| **With the `non-visual-mode` skill** | **25 of 25 — 100%** |
-| Just saying "I use a screen reader" | 19 of 25 — 76% |
-| Nothing special | 14 of 25 — 56% |
+Out of 25 checks total (five questions, five checks each):
+
+- **With the `non-visual-mode` skill:** all 25 passed — 100%.
+- **Just saying "I use a screen reader," no skill:** 19 of 25 — 76%.
+- **Nothing special, just the plain question:** 14 of 25 — 56%.
 
 In plain terms:
 
