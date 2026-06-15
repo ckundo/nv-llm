@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eval Review</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&family=Lora:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" integrity="sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT" crossorigin="anonymous"></script>
+  <style>
+    :root {
+      --bg: #faf9f5;
+      --surface: #ffffff;
+      --border: #e8e6dc;
+      --text: #141413;
+      --text-muted: #b0aea5;
+      --accent: #d97757;
+      --accent-hover: #c4613f;
+      --green: #788c5d;
+      --green-bg: #eef2e8;
+      --red: #c44;
+      --red-bg: #fceaea;
+      --header-bg: #141413;
+      --header-text: #faf9f5;
+      --radius: 6px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Lora', Georgia, serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ---- Header ---- */
+    .header {
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .header h1 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+    .header .instructions {
+      font-size: 0.8rem;
+      opacity: 0.7;
+      margin-top: 0.25rem;
+    }
+    .header .progress {
+      font-size: 0.875rem;
+      opacity: 0.8;
+      text-align: right;
+    }
+
+    /* ---- Main content ---- */
+    .main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    /* ---- Sections ---- */
+    .section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      flex-shrink: 0;
+    }
+    .section-header {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.75rem 1rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .section-body {
+      padding: 1rem;
+    }
+
+    /* ---- Config badge ---- */
+    .config-badge {
+      display: inline-block;
+      padding: 0.2rem 0.625rem;
+      border-radius: 9999px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-left: 0.75rem;
+      vertical-align: middle;
+    }
+    .config-badge.config-primary {
+      background: rgba(33, 150, 243, 0.12);
+      color: #1976d2;
+    }
+    .config-badge.config-baseline {
+      background: rgba(255, 193, 7, 0.15);
+      color: #f57f17;
+    }
+
+    /* ---- Prompt ---- */
+    .prompt-text {
+      white-space: pre-wrap;
+      font-size: 0.9375rem;
+      line-height: 1.6;
+    }
+
+    /* ---- Outputs ---- */
+    .output-file {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .output-file + .output-file {
+      margin-top: 1rem;
+    }
+    .output-file-header {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .output-file-header .dl-btn {
+      font-size: 0.7rem;
+      color: var(--accent);
+      text-decoration: none;
+      cursor: pointer;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-weight: 500;
+      opacity: 0.8;
+    }
+    .output-file-header .dl-btn:hover {
+      opacity: 1;
+      text-decoration: underline;
+    }
+    .output-file-content {
+      padding: 0.75rem;
+      overflow-x: auto;
+    }
+    .output-file-content pre {
+      font-size: 0.8125rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+    }
+    .output-file-content img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 4px;
+    }
+    .output-file-content iframe {
+      width: 100%;
+      height: 600px;
+      border: none;
+    }
+    .output-file-content table {
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+      width: 100%;
+    }
+    .output-file-content table td,
+    .output-file-content table th {
+      border: 1px solid var(--border);
+      padding: 0.375rem 0.5rem;
+      text-align: left;
+    }
+    .output-file-content table th {
+      background: var(--bg);
+      font-weight: 600;
+    }
+    .output-file-content .download-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.875rem;
+      cursor: pointer;
+    }
+    .output-file-content .download-link:hover {
+      background: var(--border);
+    }
+    .empty-state {
+      color: var(--text-muted);
+      font-style: italic;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    /* ---- Feedback ---- */
+    .prev-feedback {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.625rem 0.75rem;
+      margin-top: 0.75rem;
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .prev-feedback-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.25rem;
+      color: var(--text-muted);
+    }
+    .feedback-textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 0.9375rem;
+      line-height: 1.5;
+      resize: vertical;
+      color: var(--text);
+    }
+    .feedback-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    .feedback-status {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+      min-height: 1.1em;
+    }
+
+    /* ---- Grades (collapsible) ---- */
+    .grades-toggle {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+    .grades-toggle:hover {
+      color: var(--accent);
+    }
+    .grades-toggle .arrow {
+      margin-right: 0.5rem;
+      transition: transform 0.15s;
+      font-size: 0.75rem;
+    }
+    .grades-toggle .arrow.open {
+      transform: rotate(90deg);
+    }
+    .grades-content {
+      display: none;
+      margin-top: 0.75rem;
+    }
+    .grades-content.open {
+      display: block;
+    }
+    .grades-summary {
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .grade-badge {
+      display: inline-block;
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .grade-pass { background: var(--green-bg); color: var(--green); }
+    .grade-fail { background: var(--red-bg); color: var(--red); }
+    .assertion-list {
+      list-style: none;
+    }
+    .assertion-item {
+      padding: 0.625rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.8125rem;
+    }
+    .assertion-item:last-child { border-bottom: none; }
+    .assertion-status {
+      font-weight: 600;
+      margin-right: 0.5rem;
+    }
+    .assertion-status.pass { color: var(--green); }
+    .assertion-status.fail { color: var(--red); }
+    .assertion-evidence {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      margin-top: 0.25rem;
+      padding-left: 1.5rem;
+    }
+
+    /* ---- View tabs ---- */
+    .view-tabs {
+      display: flex;
+      gap: 0;
+      padding: 0 2rem;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .view-tab {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.625rem 1.25rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      background: none;
+      color: var(--text-muted);
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+    }
+    .view-tab:hover { color: var(--text); }
+    .view-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+    .view-panel { display: none; }
+    .view-panel.active { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+
+    /* ---- Benchmark view ---- */
+    .benchmark-view {
+      padding: 1.5rem 2rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .benchmark-table {
+      border-collapse: collapse;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.8125rem;
+      width: 100%;
+      margin-bottom: 1.5rem;
+    }
+    .benchmark-table th, .benchmark-table td {
+      padding: 0.625rem 0.75rem;
+      text-align: left;
+      border: 1px solid var(--border);
+    }
+    .benchmark-table th {
+      font-family: 'Poppins', sans-serif;
+      background: var(--header-bg);
+      color: var(--header-text);
+      font-weight: 500;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .benchmark-table tr:hover { background: var(--bg); }
+    .benchmark-table tr.benchmark-row-with { background: rgba(33, 150, 243, 0.06); }
+    .benchmark-table tr.benchmark-row-without { background: rgba(255, 193, 7, 0.06); }
+    .benchmark-table tr.benchmark-row-with:hover { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-without:hover { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-table tr.benchmark-row-avg { font-weight: 600; border-top: 2px solid var(--border); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-with { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-without { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-delta-positive { color: var(--green); font-weight: 600; }
+    .benchmark-delta-negative { color: var(--red); font-weight: 600; }
+    .benchmark-notes {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+    }
+    .benchmark-notes h3 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+    }
+    .benchmark-notes ul {
+      list-style: disc;
+      padding-left: 1.25rem;
+    }
+    .benchmark-notes li {
+      font-size: 0.8125rem;
+      line-height: 1.6;
+      margin-bottom: 0.375rem;
+    }
+    .benchmark-empty {
+      color: var(--text-muted);
+      font-style: italic;
+      text-align: center;
+      padding: 3rem;
+    }
+
+    /* ---- Navigation ---- */
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+    .nav-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text);
+      transition: all 0.15s;
+    }
+    .nav-btn:hover:not(:disabled) {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .nav-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .done-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.5rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+    .done-btn:hover {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .done-btn.ready {
+      border: none;
+      background: var(--accent);
+      color: white;
+      font-weight: 600;
+    }
+    .done-btn.ready:hover {
+      background: var(--accent-hover);
+    }
+    /* ---- Done overlay ---- */
+    .done-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+    }
+    .done-overlay.visible {
+      display: flex;
+    }
+    .done-card {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 2rem 3rem;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 500px;
+    }
+    .done-card h2 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .done-card p {
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      line-height: 1.5;
+    }
+    .done-card .btn-row {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+    }
+    .done-card button {
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+    .done-card button:hover {
+      background: var(--bg);
+    }
+    /* ---- Toast ---- */
+    .toast {
+      position: fixed;
+      bottom: 5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 0.625rem 1.25rem;
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      z-index: 200;
+    }
+    .toast.visible {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <div id="app" style="height:100vh; display:flex; flex-direction:column;">
+    <div class="header">
+      <div>
+        <h1>Eval Review: <span id="skill-name"></span></h1>
+        <div class="instructions">Review each output and leave feedback below. Navigate with arrow keys or buttons. When done, copy feedback and paste into Claude Code.</div>
+      </div>
+      <div class="progress" id="progress"></div>
+    </div>
+
+    <!-- View tabs (only shown when benchmark data exists) -->
+    <div class="view-tabs" id="view-tabs" style="display:none;">
+      <button class="view-tab active" onclick="switchView('outputs')">Outputs</button>
+      <button class="view-tab" onclick="switchView('benchmark')">Benchmark</button>
+    </div>
+
+    <!-- Outputs panel (qualitative review) -->
+    <div class="view-panel active" id="panel-outputs">
+    <div class="main">
+      <!-- Prompt -->
+      <div class="section">
+        <div class="section-header">Prompt <span class="config-badge" id="config-badge" style="display:none;"></span></div>
+        <div class="section-body">
+          <div class="prompt-text" id="prompt-text"></div>
+        </div>
+      </div>
+
+      <!-- Outputs -->
+      <div class="section">
+        <div class="section-header">Output</div>
+        <div class="section-body" id="outputs-body">
+          <div class="empty-state">No output files found</div>
+        </div>
+      </div>
+
+      <!-- Previous Output (collapsible) -->
+      <div class="section" id="prev-outputs-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="togglePrevOutputs()">
+            <span class="arrow" id="prev-outputs-arrow">&#9654;</span>
+            Previous Output
+          </div>
+        </div>
+        <div class="grades-content" id="prev-outputs-content"></div>
+      </div>
+
+      <!-- Grades (collapsible) -->
+      <div class="section" id="grades-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="toggleGrades()">
+            <span class="arrow" id="grades-arrow">&#9654;</span>
+            Formal Grades
+          </div>
+        </div>
+        <div class="grades-content" id="grades-content"></div>
+      </div>
+
+      <!-- Feedback -->
+      <div class="section">
+        <div class="section-header">Your Feedback</div>
+        <div class="section-body">
+          <textarea
+            class="feedback-textarea"
+            id="feedback"
+            placeholder="What do you think of this output? Any issues, suggestions, or things that look great?"
+          ></textarea>
+          <div class="feedback-status" id="feedback-status"></div>
+          <div class="prev-feedback" id="prev-feedback" style="display:none;">
+            <div class="prev-feedback-label">Previous feedback</div>
+            <div id="prev-feedback-text"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav" id="outputs-nav">
+      <button class="nav-btn" id="prev-btn" onclick="navigate(-1)">&#8592; Previous</button>
+      <button class="done-btn" id="done-btn" onclick="showDoneDialog()">Submit All Reviews</button>
+      <button class="nav-btn" id="next-btn" onclick="navigate(1)">Next &#8594;</button>
+    </div>
+    </div><!-- end panel-outputs -->
+
+    <!-- Benchmark panel (quantitative stats) -->
+    <div class="view-panel" id="panel-benchmark">
+      <div class="benchmark-view" id="benchmark-content">
+        <div class="benchmark-empty">No benchmark data available. Run a benchmark to see quantitative results here.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Done overlay -->
+  <div class="done-overlay" id="done-overlay">
+    <div class="done-card">
+      <h2>Review Complete</h2>
+      <p>Your feedback has been saved. Go back to your Claude Code session and tell Claude you're done reviewing.</p>
+      <div class="btn-row">
+        <button onclick="closeDoneDialog()">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ---- Embedded data (injected by generate_review.py) ----
+    const EMBEDDED_DATA = {"skill_name": "non-visual-mode", "runs": [{"id": "table-compare-terminal-disclosure_only", "prompt": "Compare npm, yarn, and pnpm \u2014 install speed, disk usage, and lockfile format.", "eval_id": 0, "outputs": [{"name": "response.md", "type": "text", "content": "Here's a comparison of npm, yarn, and pnpm across the three areas you asked about. I've written this in a linear, screen-reader-friendly way: each package manager is its own section with labeled points, so you can navigate heading by heading and read straight through without needing to track a grid of cells. A short summary comes first.\n\n## Quick summary\n\nFor install speed, pnpm is generally the fastest, yarn is in the middle, and npm is typically the slowest of the three, though the gap has narrowed in recent npm versions. For disk usage, pnpm is by far the most efficient because it shares packages across projects, while npm and yarn each store a full copy per project. For lockfiles, all three use a single lockfile at the project root, but with different filenames and formats: npm uses package-lock.json, yarn uses yarn.lock, and pnpm uses pnpm-lock.yaml.\n\n## npm\n\nNpm is the default package manager that ships with Node.js, so it requires no separate installation.\n\n- Install speed: Generally the slowest of the three on a cold install, though performance has improved significantly in recent versions. With a warm cache and an existing lockfile, the difference is much smaller. The \"npm ci\" command, intended for clean installs in automated environments, is faster and more predictable than \"npm install\".\n- Disk usage: Highest. Each project gets its own full copy of every dependency in its node_modules folder, so the same package downloaded into ten projects is stored ten times on disk.\n- Lockfile: A file named package-lock.json, written in JSON format. It records the exact resolved version of every dependency and is human-readable, though verbose.\n\n## yarn\n\nYarn is a separate tool you install on top of Node.js. Note that there are two lines: Yarn Classic (version 1) and modern Yarn (version 2 and later, sometimes called Berry). The notes below describe the common default behavior.\n\n- Install speed: Typically faster than npm and slower than pnpm. Yarn introduced parallel downloads and offline caching early, which is much of why it became popular. Modern Yarn with its Plug-and-Play mode can be faster still, but PnP changes how dependencies are resolved and is not compatible with every package.\n- Disk usage: Similar to npm in the default mode, with a full copy of dependencies per project. Yarn also keeps a global cache of downloaded package archives, which speeds up repeat installs but does not reduce per-project node_modules size on its own. Modern Yarn's PnP mode can reduce disk usage substantially by avoiding a conventional node_modules folder.\n- Lockfile: A file named yarn.lock. It uses a custom, YAML-like format in Yarn Classic; modern Yarn writes a stricter YAML format. It is human-readable.\n\n## pnpm\n\nPnpm is also a separate install on top of Node.js. Its name reflects its main idea: a \"performant\" npm that is efficient with disk space.\n\n- Install speed: Generally the fastest of the three, especially on repeat installs across multiple projects, because it can link packages from a shared store rather than re-downloading and re-copying them.\n- Disk usage: The most efficient by a wide margin. Pnpm keeps a single global content-addressable store on your machine, and each project links to packages in that store using hard links instead of copying them. So a package used by ten projects is stored on disk essentially once. This is the standout advantage of pnpm.\n- Lockfile: A file named pnpm-lock.yaml, written in YAML format. It is human-readable and tends to be compact relative to the equivalent JSON.\n\n## Practical notes\n\n- Lockfile location is the same for all three: a single file at the root of your project, committed to version control so everyone installs identical dependency versions.\n- The lockfiles are not interchangeable. If you switch package managers, you regenerate the lockfile for the new tool and typically remove the old one to avoid confusion.\n- If disk space across many projects is your main concern, pnpm is the clearest win. If you want zero extra setup, npm is already installed. Yarn sits in between and is a reasonable choice if you or your team already use it or rely on its specific features.\n\nIf it would help, I can expand any single section, or describe the exact line-by-line structure of one of the lockfile formats.\n"}], "grading": {"expectations": [{"text": "No markdown table (renders as a box-drawing grid in a terminal; pipe noise in raw text)", "passed": true, "evidence": "no table"}, {"text": "Leads with the recommendation/answer in the first sentence (BLUF)", "passed": false, "evidence": "First sentence is meta-preamble about formatting ('I've written this in a linear, screen-reader-friendly way...') before the answer; recommendation sits at the end"}, {"text": "Each tool's value stated in prose with the label repeated, not locked in a grid", "passed": true, "evidence": "Each PM has its own section repeating 'Install speed / Disk usage / Lockfile' with values; no grid"}, {"text": "No decorative emoji", "passed": true, "evidence": "none"}, {"text": "Organizes with real structure \u2014 headings and/or lists", "passed": true, "evidence": "present"}], "summary": {"passed": 4, "failed": 1, "total": 5, "pass_rate": 0.8}}}, {"id": "table-compare-terminal-with_skill", "prompt": "Compare npm, yarn, and pnpm \u2014 install speed, disk usage, and lockfile format.", "eval_id": 0, "outputs": [{"name": "response.md", "type": "text", "content": "Quick take: pnpm wins on both speed and disk usage because it hard-links a single global store instead of copying packages; yarn (with its modern releases) is close behind on speed; npm is the slowest and most disk-hungry but needs zero extra setup. All three now produce a deterministic lockfile, but in three different formats. Details follow on each of your three dimensions.\n\n## Install speed\n\nRoughly, fastest to slowest on a cold install (no cache):\n\n1. pnpm \u2014 fastest. Links from its content-addressable store, so most work is creating links rather than copying or unpacking.\n2. yarn \u2014 close to pnpm on warm installs, especially with Plug'n'Play, which skips the node_modules build step entirely.\n3. npm \u2014 slowest of the three, though the gap has narrowed a lot since npm version 7 or so.\n\nThe practical ranking depends heavily on cache state. On a warm cache the three are much closer; pnpm's lead is largest on cold installs and in CI.\n\n## Disk usage\n\n1. pnpm \u2014 smallest. One global store on disk; every project hard-links into it, so a dependency shared across ten projects is stored once, not ten times.\n2. yarn \u2014 moderate. Classic yarn copies into each node_modules like npm; Plug'n'Play mode drops node_modules and uses zipped caches, which cuts size substantially.\n3. npm \u2014 largest. Each project gets its own full, flattened node_modules with duplicated copies across projects.\n\nIf you keep many projects on one machine, pnpm's shared store is the biggest single disk win.\n\n## Lockfile format\n\nEach tool has its own file, and they are not interchangeable:\n\n- npm uses package-lock.json, in JSON. Verbose, machine-friendly, the default everyone has.\n- yarn uses yarn.lock. Classic yarn (version 1) uses a custom flat text format; modern yarn (Berry, version 2 and up) uses a YAML-based yarn.lock.\n- pnpm uses pnpm-lock.yaml, in YAML. Compact and tied to pnpm's store layout.\n\nBottom line: choose pnpm if disk space and install speed across many projects matter; choose yarn if you want Plug'n'Play or are already in its ecosystem; stick with npm if you want the zero-config default that ships with Node.\n\nWant a deeper dive on any one of these \u2014 for example pnpm's hard-link store or yarn Plug'n'Play \u2014 or a sample of what each lockfile actually looks like?\n"}], "grading": {"expectations": [{"text": "No markdown table (renders as a box-drawing grid in a terminal; pipe noise in raw text)", "passed": true, "evidence": "no table"}, {"text": "Leads with the recommendation/answer in the first sentence (BLUF)", "passed": true, "evidence": "Opens 'Quick take: pnpm wins on both speed and disk usage...'"}, {"text": "Each tool's value stated in prose with the label repeated, not locked in a grid", "passed": true, "evidence": "Each dimension is a heading with an ordered list naming pnpm/yarn/npm and its value; no grid"}, {"text": "No decorative emoji", "passed": true, "evidence": "none"}, {"text": "Organizes with real structure \u2014 headings and/or lists", "passed": true, "evidence": "present"}], "summary": {"passed": 5, "failed": 0, "total": 5, "pass_rate": 1.0}}}, {"id": "table-compare-terminal-without_skill", "prompt": "Compare npm, yarn, and pnpm \u2014 install speed, disk usage, and lockfile format.", "eval_id": 0, "outputs": [{"name": "response.md", "type": "text", "content": "# npm vs. yarn vs. pnpm\n\nHere's how the three main JavaScript package managers compare across install speed, disk usage, and lockfile format.\n\n## Quick comparison\n\n| Dimension | npm | yarn | pnpm |\n|---|---|---|---|\n| **Install speed (cold cache)** | Slowest | Fast | Fastest |\n| **Install speed (warm cache)** | Moderate | Fast | Fastest |\n| **Disk usage** | High (duplicated per project) | High (duplicated per project) | Lowest (global content-addressable store) |\n| **Lockfile** | `package-lock.json` (JSON) | `yarn.lock` (custom YAML-like) | `pnpm-lock.yaml` (YAML) |\n| **node_modules layout** | Flat (hoisted) | Flat (hoisted) | Symlinked, non-flat |\n| **Bundled with Node** | Yes | No | No |\n\n## Install speed\n\n- **npm** is generally the slowest of the three, though it has narrowed the gap considerably since the v7+ rewrite. It installs dependencies into a flat, hoisted `node_modules` tree and benefits from a local cache on repeat installs.\n- **yarn** (Classic / v1) was historically much faster than older npm thanks to parallelized fetching and a global cache. Yarn Berry (v2+) with PnP mode can be even faster by skipping `node_modules` entirely, though PnP introduces compatibility tradeoffs.\n- **pnpm** is usually the fastest, especially on warm caches and in CI. Because packages are stored once in a global content-addressable store and hard-linked into each project, it avoids re-downloading and re-copying files it already has.\n\nReal numbers depend heavily on the project, network, cache state, and machine, so treat any single benchmark with skepticism. The rough ordering on a warm cache is **pnpm > yarn > npm**, but the differences are often smaller than they used to be.\n\n## Disk usage\n\nThis is where pnpm has the clearest advantage.\n\n- **npm** and **yarn (Classic)** copy a full set of dependencies into each project's `node_modules`. If you have ten projects that all use React, you have ten copies of React on disk.\n- **pnpm** keeps a single global store (typically under `~/.local/share/pnpm/store` or similar) and creates hard links into each project. The same React version is stored once and shared across every project, which can save a large amount of disk space when you work on many repositories.\n- **yarn Berry with PnP** also reduces disk usage by storing dependencies as cached zip archives and skipping `node_modules`, but it changes the resolution model, which can break tools that expect a conventional `node_modules`.\n\n## Lockfile format\n\nAll three pin exact dependency versions for reproducible installs, but the file format differs:\n\n- **npm \u2014 `package-lock.json`**\n  Standard JSON. Verbose and easy to parse programmatically, but can produce large, noisy diffs. Records the full resolved tree, including integrity hashes and resolved URLs.\n\n- **yarn \u2014 `yarn.lock`**\n  A custom format that resembles YAML but isn't strictly valid YAML. Compact and human-readable. Yarn Berry uses an updated but conceptually similar lockfile.\n\n- **pnpm \u2014 `pnpm-lock.yaml`**\n  Valid YAML. Designed to be readable and to produce relatively clean diffs. Reflects pnpm's symlinked, non-flat dependency structure.\n\nThe lockfiles are **not interchangeable** \u2014 each package manager reads only its own, and committing more than one to a repo can cause confusion. Pick one tool per project.\n\n## Other differences worth knowing\n\n- **node_modules structure:** npm and yarn flatten (\"hoist\") dependencies, which can let your code import packages you never declared as direct dependencies (so-called \"phantom dependencies\"). pnpm's symlinked layout is stricter and surfaces those mistakes, which is good for correctness but occasionally trips up packages that rely on hoisting.\n- **Monorepos / workspaces:** All three support workspaces. pnpm and yarn are particularly popular for monorepos; pnpm's workspace support is widely praised.\n- **Distribution:** npm ships with Node.js, so it's always available. yarn and pnpm are installed separately (often via Corepack, which is bundled with modern Node).\n\n## Recommendation\n\n- Choose **npm** if you want zero extra setup and maximum compatibility \u2014 it's the default and perfectly fine for most projects.\n- Choose **pnpm** if you care about disk space, install speed, and stricter dependency correctness, especially across many projects or in a monorepo. It's the strongest all-around choice today for most teams willing to add one tool.\n- Choose **yarn** if your team already uses it or you want Berry's advanced features (PnP, constraints, plugins) \u2014 though for new projects, many teams now reach for pnpm instead.\n\nIf you tell me your project type (single app, monorepo, CI-heavy, etc.), I can give a more specific recommendation.\n"}], "grading": {"expectations": [{"text": "No markdown table (renders as a box-drawing grid in a terminal; pipe noise in raw text)", "passed": false, "evidence": "markdown table present"}, {"text": "Leads with the recommendation/answer in the first sentence (BLUF)", "passed": false, "evidence": "Leads with an H1 + 'Here's how the three... compare' preamble; recommendation buried at the end"}, {"text": "Each tool's value stated in prose with the label repeated, not locked in a grid", "passed": false, "evidence": "Per-dimension values live in a markdown grid table, not prose with repeated labels"}, {"text": "No decorative emoji", "passed": true, "evidence": "none"}, {"text": "Organizes with real structure \u2014 headings and/or lists (navigable on web/desktop, harmless in CLI)", "passed": true, "evidence": "headings/lists present"}], "summary": {"passed": 2, "failed": 3, "total": 5, "pass_rate": 0.4}}}, {"id": "code-retry-decorator-terminal-disclosure_only", "prompt": "Show me how to write a Python decorator that retries a function on exception with exponential backoff.", "eval_id": 1, "outputs": [{"name": "response.md", "type": "text", "content": "Here's a retry decorator with exponential backoff. I'll walk through it in plain prose first so the structure is clear without needing to scan the code visually, then give you the full code block, then explain the parameters.\n\n## How it works, described in words\n\nThe decorator is named `retry`. It's a configurable decorator, meaning you call it with arguments like `@retry(max_attempts=5)`, so it's built as three nested functions: the outer `retry` function takes the configuration, the middle `decorator` function takes the target function, and the inner `wrapper` function runs the retry loop.\n\nInside the wrapper, there's a loop that runs from attempt one up to the maximum number of attempts. On each pass, it tries to call the function and return its result immediately on success. If the function raises one of the exceptions you chose to catch, it checks whether this was the last allowed attempt. If it was, it re-raises the exception so the caller sees the real error. Otherwise, it calculates a delay, sleeps for that delay, and loops again.\n\nThe delay grows exponentially: it's the base delay multiplied by the backoff factor raised to the power of the attempt number that just failed. So with a one second base and a factor of two, the waits are one second, then two, then four, then eight, and so on. The delay is capped at a maximum so it never grows without bound.\n\n## The code\n\n```python\nimport time\nimport functools\nimport random\n\n\ndef retry(\n    max_attempts=3,\n    base_delay=1.0,\n    backoff_factor=2.0,\n    max_delay=60.0,\n    exceptions=(Exception,),\n    jitter=True,\n):\n    \"\"\"Retry a function with exponential backoff.\n\n    max_attempts:   total number of tries before giving up\n    base_delay:     seconds to wait after the first failure\n    backoff_factor: multiplier applied to the delay each retry\n    max_delay:      ceiling on the delay in seconds\n    exceptions:     tuple of exception types that trigger a retry\n    jitter:         add randomness to the delay to avoid thundering herd\n    \"\"\"\n    def decorator(func):\n        @functools.wraps(func)\n        def wrapper(*args, **kwargs):\n            for attempt in range(max_attempts):\n                try:\n                    return func(*args, **kwargs)\n                except exceptions as exc:\n                    # attempt is zero-based: 0 is the first try.\n                    is_last_attempt = attempt == max_attempts - 1\n                    if is_last_attempt:\n                        raise\n\n                    delay = base_delay * (backoff_factor ** attempt)\n                    delay = min(delay, max_delay)\n                    if jitter:\n                        delay = delay * (0.5 + random.random() / 2)\n\n                    time.sleep(delay)\n        return wrapper\n    return decorator\n```\n\n## Using it\n\n```python\n@retry(max_attempts=5, base_delay=0.5, exceptions=(ConnectionError, TimeoutError))\ndef fetch_data(url):\n    # network call that might fail\n    ...\n```\n\n## Parameter reference, listed one per line\n\n- `max_attempts` is the total number of tries, including the first one. With a value of five you get the original call plus up to four retries.\n- `base_delay` is how many seconds to wait after the first failure.\n- `backoff_factor` is the multiplier applied to the delay on each successive retry. A value of two doubles the wait each time.\n- `max_delay` is the ceiling, in seconds, so the wait never exceeds this value no matter how many retries happen.\n- `exceptions` is a tuple of exception types that should trigger a retry. Anything not in this tuple propagates immediately. Catch specific exceptions rather than the broad default in real code.\n- `jitter`, when true, multiplies the delay by a random factor between roughly one half and one. This spreads out retries from many clients so they don't all wake at the same instant and overload the service again.\n\n## Two things worth knowing\n\nFirst, `functools.wraps` preserves the decorated function's name, docstring, and signature metadata. Without it, tools that introspect your function, including some screen-reader-friendly documentation generators, would report the wrapper instead of the real function.\n\nSecond, the loop catches the configured exceptions and re-raises on the final attempt rather than swallowing the error, so the original traceback reaches your caller. That means errors stay debuggable and the failure is reported, not silently hidden.\n\nWant me to add support for a logging callback on each retry, or an async version using `asyncio.sleep` for coroutines?\n"}], "grading": {"expectations": [{"text": "A plain-language description of what the code does appears BEFORE the first code block", "passed": true, "evidence": "'## How it works, described in words' explains the design before the code block"}, {"text": "The language (Python) is named in prose, not only in the fence", "passed": false, "evidence": "Language appears only in the ```python fence; prose never says 'Python' (the fence isn't announced aloud)"}, {"text": "Code kept to a few short focused blocks (<=3), not a long multi-block dump", "passed": true, "evidence": "2 blocks"}, {"text": "No decorative emoji", "passed": true, "evidence": "none"}, {"text": "Offers optional variants on request rather than dumping them all inline (progressive disclosure)", "passed": true, "evidence": "Offers a logging callback and an async version on request rather than dumping them"}], "summary": {"passed": 4, "failed": 1, "total": 5, "pass_rate": 0.8}}}, {"id": "code-retry-decorator-terminal-with_skill", "prompt": "Show me how to write a Python decorator that retries a function on exception with exponential backoff.", "eval_id": 1, "outputs": [{"name": "response.md", "type": "text", "content": "Here's a Python retry decorator with exponential backoff. It wraps any function so that, when the function raises an exception, the decorator waits and calls it again, doubling the wait each time, until it either succeeds or runs out of attempts.\n\nThe decorator is configurable with four things: the maximum number of attempts, the initial delay in seconds, the factor the delay is multiplied by after each failure, and which exception types should trigger a retry. On the final attempt it stops swallowing the error and re-raises it so the caller still sees the failure.\n\n```python\nimport time\nimport functools\n\n\ndef retry(max_attempts=3, initial_delay=1.0, backoff=2.0, exceptions=(Exception,)):\n    def decorator(func):\n        @functools.wraps(func)\n        def wrapper(*args, **kwargs):\n            delay = initial_delay\n            for attempt in range(1, max_attempts + 1):\n                try:\n                    return func(*args, **kwargs)\n                except exceptions as error:\n                    if attempt == max_attempts:\n                        raise\n                    print(f\"Attempt {attempt} failed: {error}. Retrying in {delay:.1f}s.\")\n                    time.sleep(delay)\n                    delay *= backoff\n        return wrapper\n    return decorator\n```\n\nTo use it, apply the decorator above the function you want to protect and pass whichever settings you need. For example, decorating a function with a maximum of five attempts, an initial delay of half a second, and retries only on connection errors would look like applying retry with max_attempts set to 5, initial_delay set to 0.5, and exceptions set to a tuple containing ConnectionError. With those settings the waits are roughly half a second, one second, two seconds, then four seconds across the four gaps between five attempts.\n\nHow it works, in four steps. First, the wrapper loops from attempt one up to the maximum. Second, on each pass it tries to call the wrapped function and returns immediately if the call succeeds. Third, if the call raises one of the listed exception types and attempts remain, it reports the failure, sleeps for the current delay, then multiplies the delay by the backoff factor. Fourth, on the last attempt it re-raises the exception instead of sleeping, so the original error propagates normally.\n\nTwo things worth knowing. The functools.wraps line preserves the wrapped function's name, docstring, and signature, which keeps tracebacks and introspection readable. And the print line is just for visibility; in real code you'd usually replace it with a logging call so retries show up in your logs rather than standard output.\n\nIf you'd like, I can show a variant that adds random jitter to the delay to avoid thundering-herd retries, an async version for use with asyncio, or one that uses the logging module instead of print. Tell me which and I'll show just that.\n"}], "grading": {"expectations": [{"text": "A plain-language description of what the code does appears BEFORE the first code block", "passed": true, "evidence": "Opening two paragraphs describe what the decorator does before the single code block"}, {"text": "The language (Python) is named in prose, not only in the fence", "passed": true, "evidence": "'Here's a Python retry decorator with exponential backoff' names the language in prose"}, {"text": "Code kept to a few short focused blocks (<=3), not a long multi-block dump", "passed": true, "evidence": "1 blocks"}, {"text": "No decorative emoji", "passed": true, "evidence": "none"}, {"text": "Offers optional variants on request rather than dumping them all inline (progressive disclosure)", "passed": true, "evidence": "Offers a jitter variant, an async version, and a logging variant on request"}], "summary": {"passed": 5, "failed": 0, "total": 5, "pass_rate": 1.0}}}, {"id": "code-retry-decorator-terminal-without_skill", "prompt": "Show me how to write a Python decorator that retries a function on exception with exponential backoff.", "eval_id": 1, "outputs": [{"name": "response.md", "type": "text", "content": "Here's a Python decorator that retries a function on exception with exponential backoff.\n\n## Basic version\n\n```python\nimport time\nimport functools\n\n\ndef retry(exceptions=Exception, tries=3, delay=1, backoff=2):\n    \"\"\"\n    Retry a function on exception with exponential backoff.\n\n    Args:\n        exceptions: Exception type (or tuple of types) to catch and retry on.\n        tries:      Maximum number of attempts before giving up.\n        delay:      Initial delay between attempts, in seconds.\n        backoff:    Multiplier applied to the delay after each failure.\n    \"\"\"\n    def decorator(func):\n        @functools.wraps(func)\n        def wrapper(*args, **kwargs):\n            current_delay = delay\n            for attempt in range(1, tries + 1):\n                try:\n                    return func(*args, **kwargs)\n                except exceptions as exc:\n                    if attempt == tries:\n                        raise  # Out of retries; re-raise the last exception.\n                    print(\n                        f\"{func.__name__} failed with {exc!r} \"\n                        f\"(attempt {attempt}/{tries}); \"\n                        f\"retrying in {current_delay:.1f}s...\"\n                    )\n                    time.sleep(current_delay)\n                    current_delay *= backoff\n        return wrapper\n    return decorator\n```\n\n### Usage\n\n```python\nimport random\n\n@retry(exceptions=(ConnectionError, TimeoutError), tries=5, delay=1, backoff=2)\ndef fetch_data():\n    if random.random() < 0.7:\n        raise ConnectionError(\"temporary network glitch\")\n    return \"data!\"\n\nprint(fetch_data())\n```\n\nWith `delay=1` and `backoff=2`, the waits between attempts are `1s, 2s, 4s, 8s, ...`. The decorator makes up to `tries` attempts total and re-raises the original exception if all of them fail.\n\n## How it works\n\n- `functools.wraps(func)` preserves the wrapped function's name, docstring, and other metadata.\n- The decorator takes arguments, so it has three nested layers: `retry(...)` returns `decorator`, which returns `wrapper`, which actually runs the function.\n- On each failure, we sleep for `current_delay`, then multiply it by `backoff`, producing exponential growth.\n- On the final attempt we use a bare `raise` to re-raise the *original* exception with its traceback intact.\n\n## Production-ready version\n\nA few refinements you'll usually want in real code: proper logging instead of `print`, a `max_delay` cap, and optional jitter to avoid the \"thundering herd\" problem where many clients retry in lockstep.\n\n```python\nimport time\nimport random\nimport logging\nimport functools\n\nlogger = logging.getLogger(__name__)\n\n\ndef retry(\n    exceptions=Exception,\n    tries=3,\n    delay=1.0,\n    backoff=2.0,\n    max_delay=None,\n    jitter=False,\n):\n    \"\"\"\n    Retry a function on exception with exponential backoff.\n\n    Args:\n        exceptions: Exception type or tuple of types to retry on.\n        tries:      Maximum number of attempts.\n        delay:      Initial delay between attempts, in seconds.\n        backoff:    Delay multiplier applied after each failure.\n        max_delay:  Optional upper bound on the delay, in seconds.\n        jitter:     If True, randomize each delay in [0, current_delay]\n                    to avoid synchronized retries.\n    \"\"\"\n    def decorator(func):\n        @functools.wraps(func)\n        def wrapper(*args, **kwargs):\n            current_delay = delay\n            for attempt in range(1, tries + 1):\n                try:\n                    return func(*args, **kwargs)\n                except exceptions as exc:\n                    if attempt == tries:\n                        logger.error(\n                            \"%s failed after %d attempts.\",\n                            func.__name__, tries,\n                        )\n                        raise\n\n                    sleep_for = current_delay\n                    if jitter:\n                        sleep_for = random.uniform(0, current_delay)\n\n                    logger.warning(\n                        \"%s failed with %r (attempt %d/%d); retrying in %.2fs.\",\n                        func.__name__, exc, attempt, tries, sleep_for,\n                    )\n                    time.sleep(sleep_for)\n\n                    current_delay *= backoff\n                    if max_delay is not None:\n                        current_delay = min(current_delay, max_delay)\n        return wrapper\n    return decorator\n```\n\n### Usage\n\n```python\n@retry(\n    exceptions=(ConnectionError, TimeoutError),\n    tries=5,\n    delay=1,\n    backoff=2,\n    max_delay=10,\n    jitter=True,\n)\ndef call_flaky_api():\n    ...\n```\n\n## Async version\n\nIf you're decorating coroutines, use `asyncio.sleep` so you don't block the event loop:\n\n```python\nimport asyncio\nimport functools\n\n\ndef async_retry(exceptions=Exception, tries=3, delay=1.0, backoff=2.0):\n    def decorator(func):\n        @functools.wraps(func)\n        async def wrapper(*args, **kwargs):\n            current_delay = delay\n            for attempt in range(1, tries + 1):\n                try:\n                    return await func(*args, **kwargs)\n                except exceptions as exc:\n                    if attempt == tries:\n                        raise\n                    await asyncio.sleep(current_delay)\n                    current_delay *= backoff\n        return wrapper\n    return decorator\n```\n\n## Use an existing library instead\n\nFor production systems, consider a battle-tested library rather than rolling your own. [`tenacity`](https://tenacity.readthedocs.io/) is the most popular:\n\n```python\nfrom tenacity import retry, stop_after_attempt, wait_exponential\n\n@retry(stop=stop_after_attempt(5), wait=wait_exponential(multiplier=1, max=10))\ndef fetch_data():\n    ...\n```\n\nIt handles jitter, retry conditions, callbacks, async, and more out of the box. The hand-rolled decorator above is great for learning and for keeping dependencies minimal, but `tenacity` is worth reaching for once your needs grow.\n"}], "grading": {"expectations": [{"text": "A plain-language description of what the code does appears BEFORE the first code block", "passed": false, "evidence": "Full code block under '## Basic version' precedes the '## How it works' explanation"}, {"text": "The language (Python) is named in prose, not only in the fence", "passed": true, "evidence": "'Here's a Python decorator' names the language"}, {"text": "Code kept to a few short focused blocks (<=3), not a long multi-block dump", "passed": false, "evidence": "6 blocks"}, {"text": "No decorative emoji", "passed": true, "evidence": "none"}, {"text": "Offers optional variants (jitter/cap/async/library) on request rather than dumping them all inline (progressive disclosure)", "passed": false, "evidence": "Dumps Basic + Production + Async + tenacity versions inline (6 blocks) instead of offering them"}], "summary": {"passed": 2, "failed": 3, "total": 5, "pass_rate": 0.4}}}, {"id": "oauth-summary-terminal-disclosure_only", "prompt": "Summarize how OAuth 2.0's authorization code flow works.", "eval_id": 2, "outputs": [{"name": "response.md", "type": "text", "content": "The OAuth 2.0 authorization code flow lets an application get access to a user's resources without ever handling the user's password. Here's how it works, step by step.\n\nThe participants are: the user (resource owner), the client application, the authorization server (which handles login and issues tokens), and the resource server (which holds the protected data).\n\nStep 1: Authorization request. The client redirects the user's browser to the authorization server. The request includes the client's ID, the requested scope (what access it wants), a redirect URI, and a state value used to prevent cross-site request forgery.\n\nStep 2: User authentication and consent. The authorization server displays a login page. The user authenticates directly with the authorization server, then approves or denies the requested access.\n\nStep 3: Authorization code returned. If the user consents, the authorization server redirects the browser back to the client's redirect URI. Attached to that redirect is a short-lived, one-time authorization code, along with the original state value, which the client verifies.\n\nStep 4: Code exchanged for tokens. The client's backend makes a direct, server-to-server request to the authorization server's token endpoint. It sends the authorization code along with its client ID and client secret. This call happens out of the browser, so the secret and the resulting tokens are never exposed to the user agent.\n\nStep 5: Tokens issued. The authorization server validates the code and credentials, then returns an access token and, optionally, a refresh token.\n\nStep 6: Accessing resources. The client includes the access token when making requests to the resource server. The resource server validates the token and returns the protected data. When the access token expires, the client can use the refresh token to obtain a new one without involving the user again.\n\nThe key security benefit is that the authorization code is exchanged for tokens over a secure back channel using the client secret, so sensitive tokens never pass through the browser. For public clients, such as mobile or single-page apps that cannot keep a secret, the flow is extended with PKCE, which uses a one-time code verifier and challenge in place of the static client secret.\n"}], "grading": {"expectations": [{"text": "Leads with a one-sentence BLUF answer before the detail", "passed": true, "evidence": "First sentence defines the flow before the steps"}, {"text": "Presents the step sequence as an ordered list (navigable <ol> on web/desktop, ordinals by ear in CLI)", "passed": false, "evidence": "no ordered list ('Step 1:' prose)"}, {"text": "States the number of steps in words too", "passed": false, "evidence": "Never states the step count in words ('step by step', no 'six steps')"}, {"text": "No markdown table", "passed": true, "evidence": "none"}, {"text": "No decorative emoji", "passed": true, "evidence": "none"}], "summary": {"passed": 3, "failed": 2, "total": 5, "pass_rate": 0.6}}}, {"id": "oauth-summary-terminal-with_skill", "prompt": "Summarize how OAuth 2.0's authorization code flow works.", "eval_id": 2, "outputs": [{"name": "response.md", "type": "text", "content": "OAuth 2.0's authorization code flow lets a third-party app get permission to access a user's data on another service without ever seeing the user's password. The app obtains a short-lived authorization code by sending the user through the service's login page, then exchanges that code for an access token over a secure back-channel call. The two-step design keeps the token out of the browser and out of URLs.\n\n## The participants\n\nThere are four roles. The resource owner is the user who owns the data. The client is the third-party application requesting access. The authorization server issues codes and tokens and is where the user logs in. The resource server holds the protected data and accepts the access token.\n\n## The steps\n\nThere are six steps, in order.\n\n1. The client redirects the user's browser to the authorization server, including its client ID, the requested scopes, a redirect URI, and a random state value used to prevent cross-site request forgery.\n2. The authorization server authenticates the user (login) and asks them to consent to the requested scopes.\n3. On approval, the authorization server redirects the browser back to the client's redirect URI, attaching a one-time authorization code and echoing back the state value.\n4. The client verifies the returned state matches what it sent, then makes a direct server-to-server POST to the authorization server's token endpoint, sending the authorization code along with its client ID and client secret.\n5. The authorization server validates the code and credentials and responds with an access token, and usually a refresh token and an expiry time.\n6. The client calls the resource server, passing the access token (typically in the HTTP Authorization header), and receives the protected data.\n\n## Why the two steps\n\nSplitting the code exchange from the redirect is the point of the flow. The authorization code travels through the browser, where it could be intercepted, but it is useless on its own: redeeming it requires the client secret, which lives only on the client's server. The access token itself never appears in the browser or in a URL.\n\n## PKCE for public clients\n\nMobile and single-page apps cannot keep a client secret private. The PKCE extension (Proof Key for Code Exchange) covers this case. The client generates a random secret called the code verifier, sends a hash of it (the code challenge) in step one, and presents the original verifier in step four. The authorization server checks that they match, so a stolen authorization code cannot be redeemed by an attacker. PKCE is now recommended for every client type, not just public ones.\n\nWant me to walk through a concrete example with sample request and response values, or go deeper on refresh tokens or PKCE?\n"}], "grading": {"expectations": [{"text": "Leads with a one-sentence BLUF answer before the detail", "passed": true, "evidence": "First sentence is a complete BLUF definition of the flow"}, {"text": "Presents the step sequence as an ordered list (navigable <ol> on web/desktop, ordinals by ear in CLI)", "passed": true, "evidence": "ordered list"}, {"text": "States the number of steps in words too", "passed": true, "evidence": "'four roles' and 'six steps, in order' stated in words"}, {"text": "No markdown table", "passed": true, "evidence": "none"}, {"text": "No decorative emoji", "passed": true, "evidence": "none"}], "summary": {"passed": 5, "failed": 0, "total": 5, "pass_rate": 1.0}}}, {"id": "oauth-summary-terminal-without_skill", "prompt": "Summarize how OAuth 2.0's authorization code flow works.", "eval_id": 2, "outputs": [{"name": "response.md", "type": "text", "content": "# OAuth 2.0 Authorization Code Flow\n\nThe authorization code flow is the most common and secure OAuth 2.0 grant type. It lets a user grant a third-party application limited access to their resources on another service, without the application ever seeing the user's password.\n\n## The Players\n\n- **Resource Owner** \u2014 the user who owns the data.\n- **Client** \u2014 the application requesting access (e.g., a web app).\n- **Authorization Server** \u2014 issues tokens after authenticating the user (e.g., Google's OAuth endpoints).\n- **Resource Server** \u2014 hosts the protected resources/API the client wants to reach.\n\n## Step-by-Step\n\n1. **Authorization request.** The client redirects the user's browser to the authorization server's `/authorize` endpoint, including its `client_id`, requested `scope`, a `redirect_uri`, a `state` value (anti-CSRF), and `response_type=code`.\n\n2. **User authenticates and consents.** The authorization server prompts the user to log in (if not already) and to approve the requested scopes.\n\n3. **Authorization code returned.** The server redirects the browser back to the client's `redirect_uri` with a short-lived, single-use **authorization code** and the original `state` value. The client verifies `state` matches what it sent.\n\n4. **Code exchanged for tokens.** The client makes a **back-channel** (server-to-server) `POST` to the authorization server's `/token` endpoint, sending the authorization code, its `client_id`, `client_secret`, and the `redirect_uri`. Because this happens on the server side, the secret and tokens are never exposed to the browser.\n\n5. **Tokens issued.** The authorization server validates everything and returns an **access token** (used to call the API), typically a short expiry, and often a **refresh token** (used to obtain new access tokens without re-prompting the user).\n\n6. **Accessing resources.** The client calls the resource server's API, presenting the access token in the `Authorization: Bearer <token>` header. The resource server validates the token and returns the protected data.\n\n7. **Refreshing.** When the access token expires, the client uses the refresh token at the `/token` endpoint to get a new one\u2014no user interaction needed.\n\n## Why It's Designed This Way\n\n- The **authorization code** is exchanged for tokens over a secure back channel, so tokens never travel through the browser's URL or history.\n- The code is **short-lived and single-use**, limiting the damage if it leaks.\n- The `state` parameter protects against CSRF attacks.\n- **PKCE** (Proof Key for Code Exchange) is now strongly recommended for all clients\u2014and required for public clients like mobile and single-page apps that can't safely store a `client_secret`. The client sends a hashed `code_challenge` up front and proves possession of the original `code_verifier` at token exchange, preventing intercepted codes from being used.\n\n## In Short\n\nThe user authorizes the app at the authorization server, the app receives a temporary code via redirect, and then the app's backend swaps that code for access and refresh tokens over a secure channel. This separation keeps credentials and tokens out of the browser, which is what makes the authorization code flow the recommended choice for server-side and (with PKCE) public clients.\n"}], "grading": {"expectations": [{"text": "Leads with a one-sentence BLUF answer before the detail", "passed": true, "evidence": "Leads with a one-sentence definition of the flow"}, {"text": "Presents the step sequence as an ordered list (navigable <ol> on web/desktop, ordinals by ear in CLI)", "passed": true, "evidence": "ordered list present"}, {"text": "States the number of steps in words too (survives where list semantics aren't announced)", "passed": false, "evidence": "Lists Steps 1-7 but never states the count in words"}, {"text": "No markdown table", "passed": true, "evidence": "none"}, {"text": "No decorative emoji", "passed": true, "evidence": "none"}], "summary": {"passed": 4, "failed": 1, "total": 5, "pass_rate": 0.8}}}, {"id": "wcag-pour-rendered-disclosure_only", "prompt": "Give me a structured rundown of the WCAG 2.2 POUR principles and what each covers.", "eval_id": 3, "outputs": [{"name": "response.md", "type": "text", "content": "# WCAG 2.2 POUR Principles\n\nWCAG 2.2 organizes all of its guidelines under four foundational principles, known by the acronym POUR: Perceivable, Operable, Understandable, and Robust. Every guideline and success criterion sits beneath one of these four. Here is a structured rundown of each.\n\n## 1. Perceivable\n\nInformation and user interface components must be presentable to users in ways they can perceive. Nothing can be invisible to all of a person's senses.\n\nGuidelines under this principle:\n\n- **1.1 Text Alternatives.** Provide text alternatives for non-text content (for example, alt text on images) so it can be converted into other forms people need, such as speech, braille, or large print.\n- **1.2 Time-based Media.** Provide alternatives for audio and video, including captions, transcripts, and audio descriptions.\n- **1.3 Adaptable.** Create content that can be presented in different ways without losing information or structure. This covers programmatic relationships (headings, lists, tables), meaningful sequence, and not relying solely on sensory characteristics like shape or position.\n- **1.4 Distinguishable.** Make it easier to see and hear content, including separating foreground from background. Covers color contrast, use of color not being the only means of conveying information, text resize, reflow, and control of audio.\n\n## 2. Operable\n\nUser interface components and navigation must be operable. Users must be able to operate the interface, and the interface cannot require interaction a person cannot perform.\n\nGuidelines under this principle:\n\n- **2.1 Keyboard Accessible.** Make all functionality available from a keyboard, and avoid keyboard traps. This is especially important for screen reader and switch-device users.\n- **2.2 Enough Time.** Provide users enough time to read and use content, including the ability to pause, stop, extend, or adjust time limits.\n- **2.3 Seizures and Physical Reactions.** Do not design content in a way that is known to cause seizures, such as content that flashes more than three times per second.\n- **2.4 Navigable.** Provide ways to help users navigate, find content, and determine where they are. Covers page titles, focus order, descriptive link purpose, headings and labels, multiple ways to find pages, and visible focus.\n- **2.5 Input Modalities.** Make it easier to operate functionality through various inputs beyond the keyboard, including pointer gestures, pointer cancellation, label in name, and target size.\n\n## 3. Understandable\n\nInformation and the operation of the user interface must be understandable. Users must be able to comprehend both the content and how to use the interface.\n\nGuidelines under this principle:\n\n- **3.1 Readable.** Make text content readable and understandable, including programmatically identifying the language of the page and of passages, and clarifying unusual words or abbreviations.\n- **3.2 Predictable.** Make web pages appear and operate in predictable ways. Components that look or function the same should behave consistently, and context should not change unexpectedly on focus or input.\n- **3.3 Input Assistance.** Help users avoid and correct mistakes, including clear error identification, labels and instructions, error suggestions, error prevention for important actions, and (new in 2.2) reducing redundant entry and supporting accessible authentication.\n\n## 4. Robust\n\nContent must be robust enough that it can be interpreted reliably by a wide variety of user agents, including assistive technologies. As technologies and assistive tools evolve, content should remain accessible.\n\nGuidelines under this principle:\n\n- **4.1 Compatible.** Maximize compatibility with current and future user agents, including assistive technologies. This covers valid, well-formed markup and, critically for screen readers, the **Name, Role, Value** criterion: every user interface component must expose its name, role, and state programmatically so assistive technology can announce and operate it correctly. Status messages should also be communicable to assistive technology without taking focus.\n\n## How It Fits Together\n\nA quick way to hold the four in mind:\n\n- **Perceivable** asks: can the user sense the content at all?\n- **Operable** asks: can the user work the controls?\n- **Understandable** asks: can the user make sense of it?\n- **Robust** asks: will assistive technology, including your screen reader, interpret it reliably now and in the future?\n\nBeneath the four principles sit 13 guidelines, and beneath those sit the individual, testable success criteria, each assigned a conformance level of A, AA, or AAA. WCAG 2.2 added several new success criteria compared to 2.1, most notably around focus appearance, dragging movements, target size, consistent help, redundant entry, and accessible authentication.\n"}], "grading": {"expectations": [{"text": "USES real ## headings for the principles", "passed": true, "evidence": "present"}, {"text": "Covers all four POUR principles", "passed": true, "evidence": "all four"}, {"text": "Conveys sub-areas as prose/lists rather than an unnecessary data table", "passed": true, "evidence": "no table"}, {"text": "No decorative emoji", "passed": true, "evidence": "none"}, {"text": "Leads with what POUR stands for before the detail (answer-first)", "passed": true, "evidence": "Opens 'WCAG 2.2 organizes all of its guidelines under four foundational principles, known by the acronym POUR: ...'"}], "summary": {"passed": 5, "failed": 0, "total": 5, "pass_rate": 1.0}}}, {"id": "wcag-pour-rendered-with_skill", "prompt": "Give me a structured rundown of the WCAG 2.2 POUR principles and what each covers.", "eval_id": 3, "outputs": [{"name": "response.md", "type": "text", "content": "POUR is the four-principle framework at the top of WCAG 2.2. Every success criterion lives under one of these four principles: Perceivable, Operable, Understandable, and Robust. Here is what each one covers.\n\n## 1. Perceivable\n\nInformation and interface components must be presentable to users in ways they can perceive \u2014 if a user can't sense it through some channel, it isn't there for them. This principle holds the four guidelines covering text alternatives for images, captions and other alternatives for audio and video, content that adapts to different presentations without losing meaning or structure, and making content easy to see and hear (including color contrast and not using color alone to convey meaning).\n\n## 2. Operable\n\nInterface components and navigation must be operable \u2014 every user must be able to drive the interface, whatever input they use. This principle covers full keyboard operability, giving users enough time to read and use content, avoiding content that flashes in ways that could trigger seizures, providing ways to navigate and find content (such as page titles, focus order, and clear link purpose), and supporting input methods beyond a simple keyboard (such as pointer gestures and target size).\n\n## 3. Understandable\n\nInformation and the operation of the interface must be understandable \u2014 content a user can perceive and operate still fails if they can't make sense of it. This principle covers making text readable and understandable (including identifying the language of the page), making content appear and operate in predictable ways, and helping users avoid and correct mistakes (such as clear labels, error identification, and error suggestions).\n\n## 4. Robust\n\nContent must be robust enough to be interpreted reliably by a wide variety of user agents, including assistive technologies \u2014 and it must stay reliable as those technologies evolve. This principle covers compatibility: using clean, well-formed markup and providing correct name, role, and value information for interface components so that assistive tech like screen readers can interpret them, including status messages that get announced without moving focus.\n\n## One way to remember the order\n\nThe principles run in a natural sequence: first you have to perceive the content, then operate the interface, then understand what you're perceiving and operating, and finally the whole thing has to be robust enough to keep working across browsers and assistive tech. Perceive, operate, understand, robust \u2014 that's POUR.\n\nWant me to go a level deeper on any one principle and list its individual guidelines or success criteria? I can also map specific criteria to their conformance levels of A, double-A, or triple-A.\n"}], "grading": {"expectations": [{"text": "USES real ## headings for the principles", "passed": true, "evidence": "present"}, {"text": "Covers all four POUR principles", "passed": true, "evidence": "all four"}, {"text": "Conveys sub-areas as prose/lists rather than an unnecessary data table", "passed": true, "evidence": "no table"}, {"text": "No decorative emoji", "passed": true, "evidence": "none"}, {"text": "Leads with what POUR stands for before the detail (answer-first)", "passed": true, "evidence": "Opens 'POUR is the four-principle framework at the top of WCAG 2.2 ... Perceivable, Operable, Understandable, and Robust'"}], "summary": {"passed": 5, "failed": 0, "total": 5, "pass_rate": 1.0}}}, {"id": "wcag-pour-rendered-without_skill", "prompt": "Give me a structured rundown of the WCAG 2.2 POUR principles and what each covers.", "eval_id": 3, "outputs": [{"name": "response.md", "type": "text", "content": "# The WCAG POUR Principles\n\nWCAG (Web Content Accessibility Guidelines) is organized around four foundational principles, captured by the acronym **POUR**: **P**erceivable, **O**perable, **U**nderstandable, and **R**obust. Together they say that content must be accessible to *everyone*, no matter how they perceive, navigate, or process it. Below each principle, the guidelines define specific **success criteria** that you can test against (rated at conformance levels A, AA, and AAA).\n\nWCAG 2.2 (published October 2023) keeps these same four principles and adds nine new success criteria relative to WCAG 2.1.\n\n---\n\n## 1. Perceivable\n\n> Information and user interface components must be presentable to users in ways they can perceive.\n\nIf a user can't perceive the content with at least one of their senses, it effectively doesn't exist for them. This principle is about making sure information isn't locked behind a single sensory channel.\n\n**What it covers:**\n\n- **Text alternatives** \u2014 Provide `alt` text for images and non-text content so it can be read aloud, enlarged, or rendered in braille.\n- **Time-based media** \u2014 Captions, transcripts, and audio descriptions for audio and video.\n- **Adaptable** \u2014 Content can be presented in different ways (e.g., a simpler layout) without losing information or structure; correct reading order and meaningful sequence.\n- **Distinguishable** \u2014 Make it easy to see and hear content: sufficient color contrast, not relying on color alone, resizable text, control over audio, and reflow without horizontal scrolling.\n\n---\n\n## 2. Operable\n\n> User interface components and navigation must be operable.\n\nUsers must be able to *do things* with the interface, regardless of input method. Not everyone uses a mouse, and not everyone can move quickly or precisely.\n\n**What it covers:**\n\n- **Keyboard accessible** \u2014 All functionality is available from a keyboard, with no \"keyboard traps.\"\n- **Enough time** \u2014 Users can pause, extend, or turn off time limits and moving content.\n- **Seizures and physical reactions** \u2014 Avoid content that flashes more than three times per second.\n- **Navigable** \u2014 Help users find content and know where they are: skip links, descriptive page titles, logical focus order, clear link purpose, and visible focus indicators.\n- **Input modalities** \u2014 Support various inputs beyond the keyboard, including pointer gestures, target size, and avoiding accidental activation. *(WCAG 2.2 adds criteria here, such as Target Size (Minimum) and Dragging Movements.)*\n\n---\n\n## 3. Understandable\n\n> Information and the operation of the user interface must be understandable.\n\nIt's not enough to perceive and operate content \u2014 users also have to *comprehend* it and predict how it behaves.\n\n**What it covers:**\n\n- **Readable** \u2014 Text is readable and understandable: identify the page language, and explain unusual words, abbreviations, or jargon where needed.\n- **Predictable** \u2014 Pages appear and operate in consistent, expected ways; navigation and components are placed and labeled consistently; changes of context don't happen unexpectedly.\n- **Input assistance** \u2014 Help users avoid and correct mistakes: clear labels and instructions, error identification, error suggestions, and not forcing users to re-enter information they've already provided. *(WCAG 2.2 adds criteria like Redundant Entry and Accessible Authentication.)*\n\n---\n\n## 4. Robust\n\n> Content must be robust enough that it can be interpreted reliably by a wide variety of user agents, including assistive technologies.\n\nThis principle is forward-looking: content should keep working as browsers, devices, and assistive technologies evolve.\n\n**What it covers:**\n\n- **Compatible** \u2014 Maximize compatibility with current and future tools. Use valid, well-formed markup; ensure name, role, and value are exposed for custom UI components (so screen readers can interpret them); and announce status messages programmatically without moving focus.\n\n---\n\n## Quick reference\n\n| Principle | Core question | Key concern |\n|---|---|---|\n| **Perceivable** | Can users sense the content? | Text alternatives, captions, contrast, adaptable layout |\n| **Operable** | Can users interact with it? | Keyboard access, enough time, navigation, input methods |\n| **Understandable** | Can users comprehend it? | Readability, predictability, input help and error handling |\n| **Robust** | Will it work across technologies? | Valid code, name/role/value, assistive-tech compatibility |\n\n---\n\nA helpful way to remember the intent: the first three principles describe what users do with content (**perceive** it, **operate** it, **understand** it), and the fourth (**robust**) makes sure that experience holds up across the tools people actually use.\n\nIf you'd like, I can go deeper on any single principle, map these to specific A/AA success criteria, or summarize exactly what's new in WCAG 2.2.\n"}], "grading": {"expectations": [{"text": "USES real ## headings for the principles (semantics not stripped on a rendered surface)", "passed": true, "evidence": "## headings present"}, {"text": "Covers all four POUR principles", "passed": true, "evidence": "all four"}, {"text": "Conveys sub-areas as prose/lists rather than an unnecessary data table", "passed": false, "evidence": "added a table"}, {"text": "No decorative emoji", "passed": true, "evidence": "none"}, {"text": "Leads with what POUR stands for before the detail (answer-first)", "passed": true, "evidence": "Opens 'POUR stands for Perceivable, Operable...' before detail"}], "summary": {"passed": 4, "failed": 1, "total": 5, "pass_rate": 0.8}}}, {"id": "revenue-chart-terminal-disclosure_only", "prompt": "Chart our last 4 quarters of revenue: 1.2M, 1.9M, 2.5M, 3.4M.", "eval_id": 4, "outputs": [{"name": "response.md", "type": "text", "content": "Here's your last 4 quarters of revenue. Since you use a screen reader, I'm leading with the numbers in plain text and a data table, then describing the trend. Let me know if you'd also like an image file of the chart.\n\n## Revenue by Quarter\n\n| Quarter | Revenue |\n|---------|---------|\n| Q1 | $1.2M |\n| Q2 | $1.9M |\n| Q3 | $2.5M |\n| Q4 | $3.4M |\n\n## Summary\n\n- **Direction:** Revenue increased every quarter, from $1.2M in Q1 to $3.4M in Q4.\n- **Total growth:** Up $2.2M over the four quarters, a 183% increase from Q1 to Q4.\n- **Quarter-over-quarter changes:**\n  - Q1 to Q2: up $0.7M (+58%)\n  - Q2 to Q3: up $0.6M (+32%)\n  - Q3 to Q4: up $0.9M (+36%)\n- **Average quarterly revenue:** about $2.25M.\n\n## Text-based bar chart\n\nEach block represents roughly $0.2M.\n\n```\nQ1  $1.2M  \u2588\u2588\u2588\u2588\u2588\u2588\nQ2  $1.9M  \u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u258c\nQ3  $2.5M  \u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u258c\nQ4  $3.4M  \u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\n```\n\nIf you'd like, I can generate this as an image (PNG or SVG) with descriptive alt text, export it to a spreadsheet, or build an accessible HTML version with a properly marked-up `<table>` and chart description. Just tell me which format works best for you.\n"}], "grading": {"expectations": [{"text": "The per-quarter values and the trend are stated in words", "passed": true, "evidence": "States values and trend in the summary ('from $1.2M in Q1 to $3.4M in Q4', plus QoQ changes)"}, {"text": "No ASCII / box-drawing bar chart", "passed": false, "evidence": "ASCII/box chart present"}, {"text": "No markdown table", "passed": false, "evidence": "table present"}, {"text": "Any offered chart image carries standalone descriptive alt text (or data already fully in prose)", "passed": true, "evidence": "Data present in the summary and offers an image 'with descriptive alt text' (alt not given inline, but data is in text)"}, {"text": "No decorative emoji", "passed": true, "evidence": "none"}], "summary": {"passed": 3, "failed": 2, "total": 5, "pass_rate": 0.6}}}, {"id": "revenue-chart-terminal-with_skill", "prompt": "Chart our last 4 quarters of revenue: 1.2M, 1.9M, 2.5M, 3.4M.", "eval_id": 4, "outputs": [{"name": "response.md", "type": "text", "content": "Revenue grew every quarter, from 1.2 million to 3.4 million \u2014 a 183% increase over the four quarters, and just under triple the starting point.\n\nQuarter by quarter: Q1 was 1.2 million; Q2 rose to 1.9 million, up 700 thousand; Q3 reached 2.5 million, up 600 thousand; Q4 hit 3.4 million, up 900 thousand. Each quarter gained more than half a million, and the largest single jump came in Q4.\n\nThe growth is steady and accelerating slightly toward the end: the quarter-over-quarter percentage rises were 58%, then 32%, then 36%. The dip in the middle reflects Q3's smaller absolute gain, but Q4 reaccelerated.\n\nWant me to generate this as an image (a bar or line chart) you can drop into a deck or share with a sighted colleague? I'll include self-contained alt text. I can also break out the quarter-over-quarter growth rates or project a Q5 estimate if that's useful.\n"}], "grading": {"expectations": [{"text": "The per-quarter values and the trend are stated in words", "passed": true, "evidence": "'from 1.2 million to 3.4 million ... Q1 was 1.2 million; Q2 rose to 1.9 million...' with QoQ trend in words"}, {"text": "No ASCII / box-drawing bar chart", "passed": true, "evidence": "none"}, {"text": "No markdown table", "passed": true, "evidence": "none"}, {"text": "Any offered chart image carries standalone descriptive alt text (or data already fully in prose)", "passed": true, "evidence": "Offers an image and explicitly says 'I'll include self-contained alt text'; full data already in prose"}, {"text": "No decorative emoji", "passed": true, "evidence": "none"}], "summary": {"passed": 5, "failed": 0, "total": 5, "pass_rate": 1.0}}}, {"id": "revenue-chart-terminal-without_skill", "prompt": "Chart our last 4 quarters of revenue: 1.2M, 1.9M, 2.5M, 3.4M.", "eval_id": 4, "outputs": [{"name": "response.md", "type": "text", "content": "Here's your last 4 quarters of revenue charted as a bar graph:\n\n```\nQuarterly Revenue ($M)\n\n3.4M |                              \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n3.2M |                              \u2502\u2588\u2588\u2588\u2588\u2588\u2588\u2502\n3.0M |                              \u2502\u2588\u2588\u2588\u2588\u2588\u2588\u2502\n2.8M |                              \u2502\u2588\u2588\u2588\u2588\u2588\u2588\u2502\n2.6M |                    \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2510  \u2502\u2588\u2588\u2588\u2588\u2588\u2588\u2502\n2.4M |                    \u2502\u2588\u2588\u2588\u2588\u2588\u2588\u2502  \u2502\u2588\u2588\u2588\u2588\u2588\u2588\u2502\n2.2M |                    \u2502\u2588\u2588\u2588\u2588\u2588\u2588\u2502  \u2502\u2588\u2588\u2588\u2588\u2588\u2588\u2502\n2.0M |                    \u2502\u2588\u2588\u2588\u2588\u2588\u2588\u2502  \u2502\u2588\u2588\u2588\u2588\u2588\u2588\u2502\n1.8M |          \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2510  \u2502\u2588\u2588\u2588\u2588\u2588\u2588\u2502  \u2502\u2588\u2588\u2588\u2588\u2588\u2588\u2502\n1.6M |          \u2502\u2588\u2588\u2588\u2588\u2588\u2588\u2502  \u2502\u2588\u2588\u2588\u2588\u2588\u2588\u2502  \u2502\u2588\u2588\u2588\u2588\u2588\u2588\u2502\n1.4M |          \u2502\u2588\u2588\u2588\u2588\u2588\u2588\u2502  \u2502\u2588\u2588\u2588\u2588\u2588\u2588\u2502  \u2502\u2588\u2588\u2588\u2588\u2588\u2588\u2502\n1.2M |\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2510  \u2502\u2588\u2588\u2588\u2588\u2588\u2588\u2502  \u2502\u2588\u2588\u2588\u2588\u2588\u2588\u2502  \u2502\u2588\u2588\u2588\u2588\u2588\u2588\u2502\n1.0M |\u2502\u2588\u2588\u2588\u2588\u2588\u2588\u2502  \u2502\u2588\u2588\u2588\u2588\u2588\u2588\u2502  \u2502\u2588\u2588\u2588\u2588\u2588\u2588\u2502  \u2502\u2588\u2588\u2588\u2588\u2588\u2588\u2502\n0.8M |\u2502\u2588\u2588\u2588\u2588\u2588\u2588\u2502  \u2502\u2588\u2588\u2588\u2588\u2588\u2588\u2502  \u2502\u2588\u2588\u2588\u2588\u2588\u2588\u2502  \u2502\u2588\u2588\u2588\u2588\u2588\u2588\u2502\n0.6M |\u2502\u2588\u2588\u2588\u2588\u2588\u2588\u2502  \u2502\u2588\u2588\u2588\u2588\u2588\u2588\u2502  \u2502\u2588\u2588\u2588\u2588\u2588\u2588\u2502  \u2502\u2588\u2588\u2588\u2588\u2588\u2588\u2502\n0.4M |\u2502\u2588\u2588\u2588\u2588\u2588\u2588\u2502  \u2502\u2588\u2588\u2588\u2588\u2588\u2588\u2502  \u2502\u2588\u2588\u2588\u2588\u2588\u2588\u2502  \u2502\u2588\u2588\u2588\u2588\u2588\u2588\u2502\n0.2M |\u2502\u2588\u2588\u2588\u2588\u2588\u2588\u2502  \u2502\u2588\u2588\u2588\u2588\u2588\u2588\u2502  \u2502\u2588\u2588\u2588\u2588\u2588\u2588\u2502  \u2502\u2588\u2588\u2588\u2588\u2588\u2588\u2502\n     \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n        Q1        Q2        Q3        Q4\n       1.2M      1.9M      2.5M      3.4M\n```\n\n**The story this tells:** Strong, consistent growth across the year.\n\n- **Q1 \u2192 Q2:** +0.7M (+58%)\n- **Q2 \u2192 Q3:** +0.6M (+32%)\n- **Q3 \u2192 Q4:** +0.9M (+36%)\n- **Full year:** +2.2M, nearly tripling from Q1 to Q4 (+183%)\n\nTotal revenue for the year: **9.0M**.\n\nWant me to generate this as an actual image (PNG/SVG), an Excel chart, or a slide? I can also add a trend line or year-over-year comparison if you have prior-year numbers.\n"}], "grading": {"expectations": [{"text": "The per-quarter values and the trend are stated in words", "passed": false, "evidence": "Per-quarter absolute values appear only in the ASCII chart; prose gives deltas not the values"}, {"text": "No ASCII / box-drawing bar chart", "passed": false, "evidence": "ASCII/box chart present"}, {"text": "No markdown table", "passed": true, "evidence": "none"}, {"text": "Any offered chart image carries standalone descriptive alt text (or data already fully in prose)", "passed": false, "evidence": "Offers to generate an image with no alt text; data carried by the ASCII chart, not prose"}, {"text": "No decorative emoji", "passed": true, "evidence": "none"}], "summary": {"passed": 2, "failed": 3, "total": 5, "pass_rate": 0.4}}}], "previous_feedback": {}, "previous_outputs": {}, "benchmark": {"metadata": {"skill_name": "non-visual-mode: skill vs 'I use a screen reader' vs nothing", "skill_path": "/Users/cameron/Developer/accesslint-org/access-LLM/non-visual-mode", "executor_model": "claude-opus-4-8[1m]", "analyzer_model": "claude-opus-4-8[1m]", "timestamp": "2026-06-15T00:53:39Z", "evals_run": [0, 1, 2, 3, 4], "runs_per_configuration": 1}, "runs": [{"eval_id": 0, "eval_name": "table-compare-terminal", "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 5, "failed": 0, "total": 5, "time_seconds": 25.7, "tokens": 26300, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "No markdown table (renders as a box-drawing grid in a terminal; pipe noise in raw text)", "passed": true, "evidence": "no table"}, {"text": "Leads with the recommendation/answer in the first sentence (BLUF)", "passed": true, "evidence": "Opens 'Quick take: pnpm wins on both speed and disk usage...'"}, {"text": "Each tool's value stated in prose with the label repeated, not locked in a grid", "passed": true, "evidence": "Each dimension is a heading with an ordered list naming pnpm/yarn/npm and its value; no grid"}, {"text": "No decorative emoji", "passed": true, "evidence": "none"}, {"text": "Organizes with real structure \u2014 headings and/or lists", "passed": true, "evidence": "present"}], "notes": []}, {"eval_id": 0, "eval_name": "table-compare-terminal", "configuration": "disclosure_only", "run_number": 1, "result": {"pass_rate": 0.8, "passed": 4, "failed": 1, "total": 5, "time_seconds": 25.2, "tokens": 25046, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "No markdown table (renders as a box-drawing grid in a terminal; pipe noise in raw text)", "passed": true, "evidence": "no table"}, {"text": "Leads with the recommendation/answer in the first sentence (BLUF)", "passed": false, "evidence": "First sentence is meta-preamble about formatting ('I've written this in a linear, screen-reader-friendly way...') before the answer; recommendation sits at the end"}, {"text": "Each tool's value stated in prose with the label repeated, not locked in a grid", "passed": true, "evidence": "Each PM has its own section repeating 'Install speed / Disk usage / Lockfile' with values; no grid"}, {"text": "No decorative emoji", "passed": true, "evidence": "none"}, {"text": "Organizes with real structure \u2014 headings and/or lists", "passed": true, "evidence": "present"}], "notes": []}, {"eval_id": 0, "eval_name": "table-compare-terminal", "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 0.4, "passed": 2, "failed": 3, "total": 5, "time_seconds": 28.1, "tokens": 25315, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "No markdown table (renders as a box-drawing grid in a terminal; pipe noise in raw text)", "passed": false, "evidence": "markdown table present"}, {"text": "Leads with the recommendation/answer in the first sentence (BLUF)", "passed": false, "evidence": "Leads with an H1 + 'Here's how the three... compare' preamble; recommendation buried at the end"}, {"text": "Each tool's value stated in prose with the label repeated, not locked in a grid", "passed": false, "evidence": "Per-dimension values live in a markdown grid table, not prose with repeated labels"}, {"text": "No decorative emoji", "passed": true, "evidence": "none"}, {"text": "Organizes with real structure \u2014 headings and/or lists (navigable on web/desktop, harmless in CLI)", "passed": true, "evidence": "headings/lists present"}], "notes": []}, {"eval_id": 1, "eval_name": "code-retry-decorator-terminal", "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 5, "failed": 0, "total": 5, "time_seconds": 22.9, "tokens": 26371, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "A plain-language description of what the code does appears BEFORE the first code block", "passed": true, "evidence": "Opening two paragraphs describe what the decorator does before the single code block"}, {"text": "The language (Python) is named in prose, not only in the fence", "passed": true, "evidence": "'Here's a Python retry decorator with exponential backoff' names the language in prose"}, {"text": "Code kept to a few short focused blocks (<=3), not a long multi-block dump", "passed": true, "evidence": "1 blocks"}, {"text": "No decorative emoji", "passed": true, "evidence": "none"}, {"text": "Offers optional variants on request rather than dumping them all inline (progressive disclosure)", "passed": true, "evidence": "Offers a jitter variant, an async version, and a logging variant on request"}], "notes": []}, {"eval_id": 1, "eval_name": "code-retry-decorator-terminal", "configuration": "disclosure_only", "run_number": 1, "result": {"pass_rate": 0.8, "passed": 4, "failed": 1, "total": 5, "time_seconds": 25.4, "tokens": 25135, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "A plain-language description of what the code does appears BEFORE the first code block", "passed": true, "evidence": "'## How it works, described in words' explains the design before the code block"}, {"text": "The language (Python) is named in prose, not only in the fence", "passed": false, "evidence": "Language appears only in the ```python fence; prose never says 'Python' (the fence isn't announced aloud)"}, {"text": "Code kept to a few short focused blocks (<=3), not a long multi-block dump", "passed": true, "evidence": "2 blocks"}, {"text": "No decorative emoji", "passed": true, "evidence": "none"}, {"text": "Offers optional variants on request rather than dumping them all inline (progressive disclosure)", "passed": true, "evidence": "Offers a logging callback and an async version on request rather than dumping them"}], "notes": []}, {"eval_id": 1, "eval_name": "code-retry-decorator-terminal", "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 0.4, "passed": 2, "failed": 3, "total": 5, "time_seconds": 34.7, "tokens": 25676, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "A plain-language description of what the code does appears BEFORE the first code block", "passed": false, "evidence": "Full code block under '## Basic version' precedes the '## How it works' explanation"}, {"text": "The language (Python) is named in prose, not only in the fence", "passed": true, "evidence": "'Here's a Python decorator' names the language"}, {"text": "Code kept to a few short focused blocks (<=3), not a long multi-block dump", "passed": false, "evidence": "6 blocks"}, {"text": "No decorative emoji", "passed": true, "evidence": "none"}, {"text": "Offers optional variants (jitter/cap/async/library) on request rather than dumping them all inline (progressive disclosure)", "passed": false, "evidence": "Dumps Basic + Production + Async + tenacity versions inline (6 blocks) instead of offering them"}], "notes": []}, {"eval_id": 2, "eval_name": "oauth-summary-terminal", "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 5, "failed": 0, "total": 5, "time_seconds": 22.1, "tokens": 26221, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Leads with a one-sentence BLUF answer before the detail", "passed": true, "evidence": "First sentence is a complete BLUF definition of the flow"}, {"text": "Presents the step sequence as an ordered list (navigable <ol> on web/desktop, ordinals by ear in CLI)", "passed": true, "evidence": "ordered list"}, {"text": "States the number of steps in words too", "passed": true, "evidence": "'four roles' and 'six steps, in order' stated in words"}, {"text": "No markdown table", "passed": true, "evidence": "none"}, {"text": "No decorative emoji", "passed": true, "evidence": "none"}], "notes": []}, {"eval_id": 2, "eval_name": "oauth-summary-terminal", "configuration": "disclosure_only", "run_number": 1, "result": {"pass_rate": 0.6, "passed": 3, "failed": 2, "total": 5, "time_seconds": 14.9, "tokens": 24297, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Leads with a one-sentence BLUF answer before the detail", "passed": true, "evidence": "First sentence defines the flow before the steps"}, {"text": "Presents the step sequence as an ordered list (navigable <ol> on web/desktop, ordinals by ear in CLI)", "passed": false, "evidence": "no ordered list ('Step 1:' prose)"}, {"text": "States the number of steps in words too", "passed": false, "evidence": "Never states the step count in words ('step by step', no 'six steps')"}, {"text": "No markdown table", "passed": true, "evidence": "none"}, {"text": "No decorative emoji", "passed": true, "evidence": "none"}], "notes": []}, {"eval_id": 2, "eval_name": "oauth-summary-terminal", "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 0.8, "passed": 4, "failed": 1, "total": 5, "time_seconds": 26.8, "tokens": 24843, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Leads with a one-sentence BLUF answer before the detail", "passed": true, "evidence": "Leads with a one-sentence definition of the flow"}, {"text": "Presents the step sequence as an ordered list (navigable <ol> on web/desktop, ordinals by ear in CLI)", "passed": true, "evidence": "ordered list present"}, {"text": "States the number of steps in words too (survives where list semantics aren't announced)", "passed": false, "evidence": "Lists Steps 1-7 but never states the count in words"}, {"text": "No markdown table", "passed": true, "evidence": "none"}, {"text": "No decorative emoji", "passed": true, "evidence": "none"}], "notes": []}, {"eval_id": 3, "eval_name": "wcag-pour-rendered", "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 5, "failed": 0, "total": 5, "time_seconds": 24.5, "tokens": 26242, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "USES real ## headings for the principles", "passed": true, "evidence": "present"}, {"text": "Covers all four POUR principles", "passed": true, "evidence": "all four"}, {"text": "Conveys sub-areas as prose/lists rather than an unnecessary data table", "passed": true, "evidence": "no table"}, {"text": "No decorative emoji", "passed": true, "evidence": "none"}, {"text": "Leads with what POUR stands for before the detail (answer-first)", "passed": true, "evidence": "Opens 'POUR is the four-principle framework at the top of WCAG 2.2 ... Perceivable, Operable, Understandable, and Robust'"}], "notes": []}, {"eval_id": 3, "eval_name": "wcag-pour-rendered", "configuration": "disclosure_only", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 5, "failed": 0, "total": 5, "time_seconds": 29.5, "tokens": 25343, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "USES real ## headings for the principles", "passed": true, "evidence": "present"}, {"text": "Covers all four POUR principles", "passed": true, "evidence": "all four"}, {"text": "Conveys sub-areas as prose/lists rather than an unnecessary data table", "passed": true, "evidence": "no table"}, {"text": "No decorative emoji", "passed": true, "evidence": "none"}, {"text": "Leads with what POUR stands for before the detail (answer-first)", "passed": true, "evidence": "Opens 'WCAG 2.2 organizes all of its guidelines under four foundational principles, known by the acronym POUR: ...'"}], "notes": []}, {"eval_id": 3, "eval_name": "wcag-pour-rendered", "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 0.8, "passed": 4, "failed": 1, "total": 5, "time_seconds": 29.0, "tokens": 25259, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "USES real ## headings for the principles (semantics not stripped on a rendered surface)", "passed": true, "evidence": "## headings present"}, {"text": "Covers all four POUR principles", "passed": true, "evidence": "all four"}, {"text": "Conveys sub-areas as prose/lists rather than an unnecessary data table", "passed": false, "evidence": "added a table"}, {"text": "No decorative emoji", "passed": true, "evidence": "none"}, {"text": "Leads with what POUR stands for before the detail (answer-first)", "passed": true, "evidence": "Opens 'POUR stands for Perceivable, Operable...' before detail"}], "notes": []}, {"eval_id": 4, "eval_name": "revenue-chart-terminal", "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 5, "failed": 0, "total": 5, "time_seconds": 21.0, "tokens": 25818, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "The per-quarter values and the trend are stated in words", "passed": true, "evidence": "'from 1.2 million to 3.4 million ... Q1 was 1.2 million; Q2 rose to 1.9 million...' with QoQ trend in words"}, {"text": "No ASCII / box-drawing bar chart", "passed": true, "evidence": "none"}, {"text": "No markdown table", "passed": true, "evidence": "none"}, {"text": "Any offered chart image carries standalone descriptive alt text (or data already fully in prose)", "passed": true, "evidence": "Offers an image and explicitly says 'I'll include self-contained alt text'; full data already in prose"}, {"text": "No decorative emoji", "passed": true, "evidence": "none"}], "notes": []}, {"eval_id": 4, "eval_name": "revenue-chart-terminal", "configuration": "disclosure_only", "run_number": 1, "result": {"pass_rate": 0.6, "passed": 3, "failed": 2, "total": 5, "time_seconds": 17.6, "tokens": 24412, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "The per-quarter values and the trend are stated in words", "passed": true, "evidence": "States values and trend in the summary ('from $1.2M in Q1 to $3.4M in Q4', plus QoQ changes)"}, {"text": "No ASCII / box-drawing bar chart", "passed": false, "evidence": "ASCII/box chart present"}, {"text": "No markdown table", "passed": false, "evidence": "table present"}, {"text": "Any offered chart image carries standalone descriptive alt text (or data already fully in prose)", "passed": true, "evidence": "Data present in the summary and offers an image 'with descriptive alt text' (alt not given inline, but data is in text)"}, {"text": "No decorative emoji", "passed": true, "evidence": "none"}], "notes": []}, {"eval_id": 4, "eval_name": "revenue-chart-terminal", "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 0.4, "passed": 2, "failed": 3, "total": 5, "time_seconds": 17.9, "tokens": 24483, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "The per-quarter values and the trend are stated in words", "passed": false, "evidence": "Per-quarter absolute values appear only in the ASCII chart; prose gives deltas not the values"}, {"text": "No ASCII / box-drawing bar chart", "passed": false, "evidence": "ASCII/box chart present"}, {"text": "No markdown table", "passed": true, "evidence": "none"}, {"text": "Any offered chart image carries standalone descriptive alt text (or data already fully in prose)", "passed": false, "evidence": "Offers to generate an image with no alt text; data carried by the ASCII chart, not prose"}, {"text": "No decorative emoji", "passed": true, "evidence": "none"}], "notes": []}], "run_summary": {"with_skill": {"pass_rate": {"mean": 1.0, "stddev": 0.0, "min": 1.0, "max": 1.0}, "time_seconds": {"mean": 23.24, "stddev": 1.8756, "min": 21.0, "max": 25.7}, "tokens": {"mean": 26190.4, "stddev": 216.165, "min": 25818, "max": 26371}}, "disclosure_only": {"pass_rate": {"mean": 0.76, "stddev": 0.1673, "min": 0.6, "max": 1.0}, "time_seconds": {"mean": 22.52, "stddev": 6.0512, "min": 14.9, "max": 29.5}, "tokens": {"mean": 24846.6, "stddev": 463.7578, "min": 24297, "max": 25343}}, "without_skill": {"pass_rate": {"mean": 0.56, "stddev": 0.2191, "min": 0.4, "max": 0.8}, "time_seconds": {"mean": 27.3, "stddev": 6.0601, "min": 17.9, "max": 34.7}, "tokens": {"mean": 25115.2, "stddev": 460.6693, "min": 24483, "max": 25676}}, "delta": {"pass_rate": "+0.44", "time_seconds": "-4.1", "tokens": "+1075"}}, "notes": ["THREE-WAY ABLATION on the same 5 prompts + same rubric: pared SKILL 100%  >  bare 'I use a screen reader' 76%  >  no skill / no disclosure 56%.", "The bare disclosure does a LOT on its own (76% vs 56%) \u2014 modern Claude genuinely adapts to 'I use a screen reader': it front-loads, uses headings, and avoids emoji without being told.", "But the skill closes the last 24 points on exactly the high-impact cases the disclosure misses: on the revenue prompt the disclosure produced BOTH a markdown table AND an ASCII bar chart (the two worst aural anti-patterns); on oauth it reverted to 'Step 1:' prose instead of a navigable ordered list and never stated the count in words.", "The disclosure's other misses were softer: a formatting preamble before the answer (table eval) and naming the language only in the code fence, not in prose (code eval).", "Consistency is the real differentiator: the disclosure is good on average but unpredictable case-to-case (3/5 to 5/5); the skill is 5/5 every time. A user shouldn't have to re-say 'I use a screen reader' each turn and hope \u2014 the skill makes it durable for the whole session.", "Cost is negligible: pared skill ~26190 tok/run vs ~25115 for no-skill and ~24847 for the disclosure \u2014 the 32-line skill adds well under 1k tokens over saying nothing."]}};
+
+    // ---- State ----
+    let feedbackMap = {};  // run_id -> feedback text
+    let currentIndex = 0;
+    let visitedRuns = new Set();
+
+    // ---- Init ----
+    async function init() {
+      // Load saved feedback from server — but only if this isn't a fresh
+      // iteration (indicated by previous_feedback being present). When
+      // previous feedback exists, the feedback.json on disk is stale from
+      // the prior iteration and should not pre-fill the textareas.
+      const hasPrevious = Object.keys(EMBEDDED_DATA.previous_feedback || {}).length > 0
+        || Object.keys(EMBEDDED_DATA.previous_outputs || {}).length > 0;
+      if (!hasPrevious) {
+        try {
+          const resp = await fetch("/api/feedback");
+          const data = await resp.json();
+          if (data.reviews) {
+            for (const r of data.reviews) feedbackMap[r.run_id] = r.feedback;
+          }
+        } catch { /* first run, no feedback yet */ }
+      }
+
+      document.getElementById("skill-name").textContent = EMBEDDED_DATA.skill_name;
+      showRun(0);
+
+      // Wire up feedback auto-save
+      const textarea = document.getElementById("feedback");
+      let saveTimeout = null;
+      textarea.addEventListener("input", () => {
+        clearTimeout(saveTimeout);
+        document.getElementById("feedback-status").textContent = "";
+        saveTimeout = setTimeout(() => saveCurrentFeedback(), 800);
+      });
+    }
+
+    // ---- Navigation ----
+    function navigate(delta) {
+      const newIndex = currentIndex + delta;
+      if (newIndex >= 0 && newIndex < EMBEDDED_DATA.runs.length) {
+        saveCurrentFeedback();
+        showRun(newIndex);
+      }
+    }
+
+    function updateNavButtons() {
+      document.getElementById("prev-btn").disabled = currentIndex === 0;
+      document.getElementById("next-btn").disabled =
+        currentIndex === EMBEDDED_DATA.runs.length - 1;
+    }
+
+    // ---- Show a run ----
+    function showRun(index) {
+      currentIndex = index;
+      const run = EMBEDDED_DATA.runs[index];
+
+      // Progress
+      document.getElementById("progress").textContent =
+        `${index + 1} of ${EMBEDDED_DATA.runs.length}`;
+
+      // Prompt
+      document.getElementById("prompt-text").textContent = run.prompt;
+
+      // Config badge
+      const badge = document.getElementById("config-badge");
+      const configMatch = run.id.match(/(with_skill|without_skill|new_skill|old_skill)/);
+      if (configMatch) {
+        const config = configMatch[1];
+        const isBaseline = config === "without_skill" || config === "old_skill";
+        badge.textContent = config.replace(/_/g, " ");
+        badge.className = "config-badge " + (isBaseline ? "config-baseline" : "config-primary");
+        badge.style.display = "inline-block";
+      } else {
+        badge.style.display = "none";
+      }
+
+      // Outputs
+      renderOutputs(run);
+
+      // Previous outputs
+      renderPrevOutputs(run);
+
+      // Grades
+      renderGrades(run);
+
+      // Previous feedback
+      const prevFb = (EMBEDDED_DATA.previous_feedback || {})[run.id];
+      const prevEl = document.getElementById("prev-feedback");
+      if (prevFb) {
+        document.getElementById("prev-feedback-text").textContent = prevFb;
+        prevEl.style.display = "block";
+      } else {
+        prevEl.style.display = "none";
+      }
+
+      // Feedback
+      document.getElementById("feedback").value = feedbackMap[run.id] || "";
+      document.getElementById("feedback-status").textContent = "";
+
+      updateNavButtons();
+
+      // Track visited runs and promote done button when all visited
+      visitedRuns.add(index);
+      const doneBtn = document.getElementById("done-btn");
+      if (visitedRuns.size >= EMBEDDED_DATA.runs.length) {
+        doneBtn.classList.add("ready");
+      }
+
+      // Scroll main content to top
+      document.querySelector(".main").scrollTop = 0;
+    }
+
+    // ---- Render outputs ----
+    function renderOutputs(run) {
+      const container = document.getElementById("outputs-body");
+      container.innerHTML = "";
+
+      const outputs = run.outputs || [];
+      if (outputs.length === 0) {
+        container.innerHTML = '<div class="empty-state">No output files</div>';
+        return;
+      }
+
+      for (const file of outputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        // Always show file header with download link
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const content = document.createElement("div");
+        content.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          content.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          content.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          content.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(content, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          content.appendChild(a);
+        } else if (file.type === "error") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          pre.style.color = "var(--red)";
+          content.appendChild(pre);
+        }
+
+        fileDiv.appendChild(content);
+        container.appendChild(fileDiv);
+      }
+    }
+
+    // ---- XLSX rendering via SheetJS ----
+    function renderXlsx(container, b64Data) {
+      try {
+        const raw = Uint8Array.from(atob(b64Data), c => c.charCodeAt(0));
+        const wb = XLSX.read(raw, { type: "array" });
+
+        for (let i = 0; i < wb.SheetNames.length; i++) {
+          const sheetName = wb.SheetNames[i];
+          const ws = wb.Sheets[sheetName];
+
+          if (wb.SheetNames.length > 1) {
+            const sheetLabel = document.createElement("div");
+            sheetLabel.style.cssText =
+              "font-weight:600; font-size:0.8rem; color:#b0aea5; margin-top:0.5rem; margin-bottom:0.25rem;";
+            sheetLabel.textContent = "Sheet: " + sheetName;
+            container.appendChild(sheetLabel);
+          }
+
+          const htmlStr = XLSX.utils.sheet_to_html(ws, { editable: false });
+          const wrapper = document.createElement("div");
+          wrapper.innerHTML = htmlStr;
+          container.appendChild(wrapper);
+        }
+      } catch (err) {
+        container.textContent = "Error rendering spreadsheet: " + err.message;
+      }
+    }
+
+    // ---- Grades ----
+    function renderGrades(run) {
+      const section = document.getElementById("grades-section");
+      const content = document.getElementById("grades-content");
+
+      if (!run.grading) {
+        section.style.display = "none";
+        return;
+      }
+
+      const grading = run.grading;
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("grades-arrow").classList.remove("open");
+
+      const summary = grading.summary || {};
+      const expectations = grading.expectations || [];
+
+      let html = '<div style="padding: 1rem;">';
+
+      // Summary line
+      const passRate = summary.pass_rate != null
+        ? Math.round(summary.pass_rate * 100) + "%"
+        : "?";
+      const badgeClass = summary.pass_rate >= 0.8 ? "grade-pass" : summary.pass_rate >= 0.5 ? "" : "grade-fail";
+      html += '<div class="grades-summary">';
+      html += '<span class="grade-badge ' + badgeClass + '">' + passRate + '</span>';
+      html += '<span>' + (summary.passed || 0) + ' passed, ' + (summary.failed || 0) + ' failed of ' + (summary.total || 0) + '</span>';
+      html += '</div>';
+
+      // Assertions list
+      html += '<ul class="assertion-list">';
+      for (const exp of expectations) {
+        const statusClass = exp.passed ? "pass" : "fail";
+        const statusIcon = exp.passed ? "\u2713" : "\u2717";
+        html += '<li class="assertion-item">';
+        html += '<span class="assertion-status ' + statusClass + '">' + statusIcon + '</span>';
+        html += '<span>' + escapeHtml(exp.text) + '</span>';
+        if (exp.evidence) {
+          html += '<div class="assertion-evidence">' + escapeHtml(exp.evidence) + '</div>';
+        }
+        html += '</li>';
+      }
+      html += '</ul>';
+
+      html += '</div>';
+      content.innerHTML = html;
+    }
+
+    function toggleGrades() {
+      const content = document.getElementById("grades-content");
+      const arrow = document.getElementById("grades-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Previous outputs (collapsible) ----
+    function renderPrevOutputs(run) {
+      const section = document.getElementById("prev-outputs-section");
+      const content = document.getElementById("prev-outputs-content");
+      const prevOutputs = (EMBEDDED_DATA.previous_outputs || {})[run.id];
+
+      if (!prevOutputs || prevOutputs.length === 0) {
+        section.style.display = "none";
+        return;
+      }
+
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("prev-outputs-arrow").classList.remove("open");
+
+      // Render the files into the content area
+      content.innerHTML = "";
+      const wrapper = document.createElement("div");
+      wrapper.style.padding = "1rem";
+
+      for (const file of prevOutputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const fc = document.createElement("div");
+        fc.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          fc.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          fc.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          fc.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(fc, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          fc.appendChild(a);
+        }
+
+        fileDiv.appendChild(fc);
+        wrapper.appendChild(fileDiv);
+      }
+
+      content.appendChild(wrapper);
+    }
+
+    function togglePrevOutputs() {
+      const content = document.getElementById("prev-outputs-content");
+      const arrow = document.getElementById("prev-outputs-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Feedback (saved to server -> feedback.json) ----
+    function saveCurrentFeedback() {
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // Build reviews array from map
+      const reviews = [];
+      for (const [run_id, feedback] of Object.entries(feedbackMap)) {
+        if (feedback.trim()) {
+          reviews.push({ run_id, feedback, timestamp: new Date().toISOString() });
+        }
+      }
+
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reviews, status: "in_progress" }),
+      }).then(() => {
+        document.getElementById("feedback-status").textContent = "Saved";
+      }).catch(() => {
+        // Static mode or server unavailable — no-op on auto-save,
+        // feedback will be downloaded on final submit
+        document.getElementById("feedback-status").textContent = "Will download on submit";
+      });
+    }
+
+    // ---- Done ----
+    function showDoneDialog() {
+      // Save current textarea to feedbackMap (but don't POST yet)
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // POST once with status: complete — include ALL runs so the model
+      // can distinguish "no feedback" (looks good) from "not reviewed"
+      const reviews = [];
+      const ts = new Date().toISOString();
+      for (const r of EMBEDDED_DATA.runs) {
+        reviews.push({ run_id: r.id, feedback: feedbackMap[r.id] || "", timestamp: ts });
+      }
+      const payload = JSON.stringify({ reviews, status: "complete" }, null, 2);
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: payload,
+      }).then(() => {
+        document.getElementById("done-overlay").classList.add("visible");
+      }).catch(() => {
+        // Server not available (static mode) — download as file
+        const blob = new Blob([payload], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "feedback.json";
+        a.click();
+        URL.revokeObjectURL(url);
+        document.getElementById("done-overlay").classList.add("visible");
+      });
+    }
+
+    function closeDoneDialog() {
+      // Reset status back to in_progress
+      saveCurrentFeedback();
+      document.getElementById("done-overlay").classList.remove("visible");
+    }
+
+    // ---- Toast ----
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("visible");
+      setTimeout(() => toast.classList.remove("visible"), 2000);
+    }
+
+    // ---- Keyboard nav ----
+    document.addEventListener("keydown", (e) => {
+      // Don't capture when typing in textarea
+      if (e.target.tagName === "TEXTAREA") return;
+
+      if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        e.preventDefault();
+        navigate(-1);
+      } else if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+        e.preventDefault();
+        navigate(1);
+      }
+    });
+
+    // ---- Util ----
+    function getDownloadUri(file) {
+      if (file.data_uri) return file.data_uri;
+      if (file.data_b64) return "data:application/octet-stream;base64," + file.data_b64;
+      if (file.type === "text") return "data:text/plain;charset=utf-8," + encodeURIComponent(file.content);
+      return "#";
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // ---- View switching ----
+    function switchView(view) {
+      document.querySelectorAll(".view-tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".view-panel").forEach(p => p.classList.remove("active"));
+      document.querySelector(`[onclick="switchView('${view}')"]`).classList.add("active");
+      document.getElementById("panel-" + view).classList.add("active");
+    }
+
+    // ---- Benchmark rendering ----
+    function renderBenchmark() {
+      const data = EMBEDDED_DATA.benchmark;
+      if (!data) return;
+
+      // Show the tabs
+      document.getElementById("view-tabs").style.display = "flex";
+
+      const container = document.getElementById("benchmark-content");
+      const summary = data.run_summary || {};
+      const metadata = data.metadata || {};
+      const notes = data.notes || [];
+
+      let html = "";
+
+      // Header
+      html += "<h2 style='font-family: Poppins, sans-serif; margin-bottom: 0.5rem;'>Benchmark Results</h2>";
+      html += "<p style='color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.25rem;'>";
+      if (metadata.skill_name) html += "<strong>" + escapeHtml(metadata.skill_name) + "</strong> &mdash; ";
+      if (metadata.timestamp) html += metadata.timestamp + " &mdash; ";
+      if (metadata.evals_run) html += "Evals: " + metadata.evals_run.join(", ") + " &mdash; ";
+      html += (metadata.runs_per_configuration || "?") + " runs per configuration";
+      html += "</p>";
+
+      // Summary table
+      html += '<table class="benchmark-table">';
+
+      function fmtStat(stat, pct) {
+        if (!stat) return "—";
+        const suffix = pct ? "%" : "";
+        const m = pct ? (stat.mean * 100).toFixed(0) : stat.mean.toFixed(1);
+        const s = pct ? (stat.stddev * 100).toFixed(0) : stat.stddev.toFixed(1);
+        return m + suffix + " ± " + s + suffix;
+      }
+
+      function deltaClass(val) {
+        if (!val) return "";
+        const n = parseFloat(val);
+        if (n > 0) return "benchmark-delta-positive";
+        if (n < 0) return "benchmark-delta-negative";
+        return "";
+      }
+
+      // Discover config names dynamically (everything except "delta")
+      const configs = Object.keys(summary).filter(k => k !== "delta");
+      const configA = configs[0] || "config_a";
+      const configB = configs[1] || "config_b";
+      const labelA = configA.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const labelB = configB.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const a = summary[configA] || {};
+      const b = summary[configB] || {};
+      const delta = summary.delta || {};
+
+      html += "<thead><tr><th>Metric</th><th>" + escapeHtml(labelA) + "</th><th>" + escapeHtml(labelB) + "</th><th>Delta</th></tr></thead>";
+      html += "<tbody>";
+
+      html += "<tr><td><strong>Pass Rate</strong></td>";
+      html += "<td>" + fmtStat(a.pass_rate, true) + "</td>";
+      html += "<td>" + fmtStat(b.pass_rate, true) + "</td>";
+      html += '<td class="' + deltaClass(delta.pass_rate) + '">' + (delta.pass_rate || "—") + "</td></tr>";
+
+      // Time (only show row if data exists)
+      if (a.time_seconds || b.time_seconds) {
+        html += "<tr><td><strong>Time (s)</strong></td>";
+        html += "<td>" + fmtStat(a.time_seconds, false) + "</td>";
+        html += "<td>" + fmtStat(b.time_seconds, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.time_seconds) + '">' + (delta.time_seconds ? delta.time_seconds + "s" : "—") + "</td></tr>";
+      }
+
+      // Tokens (only show row if data exists)
+      if (a.tokens || b.tokens) {
+        html += "<tr><td><strong>Tokens</strong></td>";
+        html += "<td>" + fmtStat(a.tokens, false) + "</td>";
+        html += "<td>" + fmtStat(b.tokens, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.tokens) + '">' + (delta.tokens || "—") + "</td></tr>";
+      }
+
+      html += "</tbody></table>";
+
+      // Per-eval breakdown (if runs data available)
+      const runs = data.runs || [];
+      if (runs.length > 0) {
+        const evalIds = [...new Set(runs.map(r => r.eval_id))].sort((a, b) => a - b);
+
+        html += "<h3 style='font-family: Poppins, sans-serif; margin-bottom: 0.75rem;'>Per-Eval Breakdown</h3>";
+
+        const hasTime = runs.some(r => r.result && r.result.time_seconds != null);
+        const hasErrors = runs.some(r => r.result && r.result.errors > 0);
+
+        for (const evalId of evalIds) {
+          const evalRuns = runs.filter(r => r.eval_id === evalId);
+          const evalName = evalRuns[0] && evalRuns[0].eval_name ? evalRuns[0].eval_name : "Eval " + evalId;
+
+          html += "<h4 style='font-family: Poppins, sans-serif; margin: 1rem 0 0.5rem; color: var(--text);'>" + escapeHtml(evalName) + "</h4>";
+          html += '<table class="benchmark-table">';
+          html += "<thead><tr><th>Config</th><th>Run</th><th>Pass Rate</th>";
+          if (hasTime) html += "<th>Time (s)</th>";
+          if (hasErrors) html += "<th>Crashes During Execution</th>";
+          html += "</tr></thead>";
+          html += "<tbody>";
+
+          // Group by config and render with average rows
+          const configGroups = [...new Set(evalRuns.map(r => r.configuration))];
+          for (let ci = 0; ci < configGroups.length; ci++) {
+            const config = configGroups[ci];
+            const configRuns = evalRuns.filter(r => r.configuration === config);
+            if (configRuns.length === 0) continue;
+
+            const rowClass = ci === 0 ? "benchmark-row-with" : "benchmark-row-without";
+            const configLabel = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+
+            for (const run of configRuns) {
+              const r = run.result || {};
+              const prClass = r.pass_rate >= 0.8 ? "benchmark-delta-positive" : r.pass_rate < 0.5 ? "benchmark-delta-negative" : "";
+              html += '<tr class="' + rowClass + '">';
+              html += "<td>" + configLabel + "</td>";
+              html += "<td>" + run.run_number + "</td>";
+              html += '<td class="' + prClass + '">' + ((r.pass_rate || 0) * 100).toFixed(0) + "% (" + (r.passed || 0) + "/" + (r.total || 0) + ")</td>";
+              if (hasTime) html += "<td>" + (r.time_seconds != null ? r.time_seconds.toFixed(1) : "—") + "</td>";
+              if (hasErrors) html += "<td>" + (r.errors || 0) + "</td>";
+              html += "</tr>";
+            }
+
+            // Average row
+            const rates = configRuns.map(r => (r.result || {}).pass_rate || 0);
+            const avgRate = rates.reduce((a, b) => a + b, 0) / rates.length;
+            const avgPrClass = avgRate >= 0.8 ? "benchmark-delta-positive" : avgRate < 0.5 ? "benchmark-delta-negative" : "";
+            html += '<tr class="benchmark-row-avg ' + rowClass + '">';
+            html += "<td>" + configLabel + "</td>";
+            html += "<td>Avg</td>";
+            html += '<td class="' + avgPrClass + '">' + (avgRate * 100).toFixed(0) + "%</td>";
+            if (hasTime) {
+              const times = configRuns.map(r => (r.result || {}).time_seconds).filter(t => t != null);
+              html += "<td>" + (times.length ? (times.reduce((a, b) => a + b, 0) / times.length).toFixed(1) : "—") + "</td>";
+            }
+            if (hasErrors) html += "<td></td>";
+            html += "</tr>";
+          }
+          html += "</tbody></table>";
+
+          // Per-assertion detail for this eval
+          const runsWithExpectations = {};
+          for (const config of configGroups) {
+            runsWithExpectations[config] = evalRuns.filter(r => r.configuration === config && r.expectations && r.expectations.length > 0);
+          }
+          const hasAnyExpectations = Object.values(runsWithExpectations).some(runs => runs.length > 0);
+          if (hasAnyExpectations) {
+            // Collect all unique assertion texts across all configs
+            const allAssertions = [];
+            const seen = new Set();
+            for (const config of configGroups) {
+              for (const run of runsWithExpectations[config]) {
+                for (const exp of (run.expectations || [])) {
+                  if (!seen.has(exp.text)) {
+                    seen.add(exp.text);
+                    allAssertions.push(exp.text);
+                  }
+                }
+              }
+            }
+
+            html += '<table class="benchmark-table" style="margin-top: 0.5rem;">';
+            html += "<thead><tr><th>Assertion</th>";
+            for (const config of configGroups) {
+              const label = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+              html += "<th>" + escapeHtml(label) + "</th>";
+            }
+            html += "</tr></thead><tbody>";
+
+            for (const assertionText of allAssertions) {
+              html += "<tr><td>" + escapeHtml(assertionText) + "</td>";
+
+              for (const config of configGroups) {
+                html += "<td>";
+                for (const run of runsWithExpectations[config]) {
+                  const exp = (run.expectations || []).find(e => e.text === assertionText);
+                  if (exp) {
+                    const cls = exp.passed ? "benchmark-delta-positive" : "benchmark-delta-negative";
+                    const icon = exp.passed ? "\u2713" : "\u2717";
+                    html += '<span class="' + cls + '" title="Run ' + run.run_number + ': ' + escapeHtml(exp.evidence || "") + '">' + icon + "</span> ";
+                  } else {
+                    html += "— ";
+                  }
+                }
+                html += "</td>";
+              }
+              html += "</tr>";
+            }
+            html += "</tbody></table>";
+          }
+        }
+      }
+
+      // Notes
+      if (notes.length > 0) {
+        html += '<div class="benchmark-notes">';
+        html += "<h3>Analysis Notes</h3>";
+        html += "<ul>";
+        for (const note of notes) {
+          html += "<li>" + escapeHtml(note) + "</li>";
+        }
+        html += "</ul></div>";
+      }
+
+      container.innerHTML = html;
+    }
+
+    // ---- Start ----
+    init();
+    renderBenchmark();
+  </script>
+</body>
+</html>
