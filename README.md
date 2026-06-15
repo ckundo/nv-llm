@@ -70,7 +70,7 @@ Read aloud in a terminal, that's "vertical bar, Dimension, vertical bar, npm…"
 
 That reads the same whether you're looking or listening.
 
-**[See every answer side by side →](https://ckundo.github.io/nv-llm/)**
+**[See every answer side by side →](https://ckundo.github.io/non-visual-mode/)**
 
 ## A fair word about the numbers
 
@@ -79,5 +79,5 @@ This was a small, quick test: one answer per question per method, one version of
 ## What's in this repo
 
 - **`non-visual-mode/`** — the skill itself.
-- **The [results page](https://ckundo.github.io/nv-llm/)** (published from the `gh-pages` branch) — every answer from all three methods, side by side, plus the scorecard.
+- **The [results page](https://ckundo.github.io/non-visual-mode/)** (published from the `gh-pages` branch) — every answer from all three methods, side by side, plus the scorecard.
 - **`screen-reader-mode-workspace/`** — the raw runs behind the numbers.
