@@ -30,6 +30,46 @@ In plain terms:
 
 So the point of the skill isn't to teach Claude something it can't do — it's to make Claude do it *every time*, so the person doesn't have to keep asking and hoping.
 
+## Two examples of the difference
+
+**"Chart our last four quarters of revenue."** Without the skill, Claude answered with a table *and* a bar chart built out of block characters:
+
+```
+| Quarter | Revenue |
+|---------|---------|
+| Q1      | $1.2M   |
+| Q2      | $1.9M   |
+| Q3      | $2.5M   |
+| Q4      | $3.4M   |
+
+Q1  $1.2M  ██████
+Q2  $1.9M  █████████▌
+Q3  $2.5M  ████████████▌
+Q4  $3.4M  █████████████████
+```
+
+Read aloud, that bar chart is a run of "black square, black square, black square…", and the table is "vertical bar, Q1, vertical bar, dollar one point two M, vertical bar." The one thing a chart is *for* — the shape of the trend — never comes through. **With the skill**, the same question puts the trend and every number into plain sentences, and offers a picture with a written description instead of forcing one on someone who can't see it:
+
+> Revenue grew every quarter, from 1.2 million to 3.4 million — a 183% increase over the four quarters. Q1 was 1.2 million; Q2 rose to 1.9 million, up 700 thousand; Q3 reached 2.5 million, up 600 thousand; Q4 hit 3.4 million, up 900 thousand.
+
+**"Compare npm, yarn, and pnpm."** Without the skill, the comparison came back as a grid:
+
+```
+| Dimension     | npm     | yarn | pnpm    |
+|---------------|---------|------|---------|
+| Install speed | Slowest | Fast | Fastest |
+| Disk usage    | High    | High | Lowest  |
+```
+
+A table is made for the eye — you scan across a row and down a column at a glance. Listening, you get one cell after another and have to keep the column headings in your head the whole way through. **With the skill**, each tool's name travels with its value, so nothing depends on remembering a column:
+
+> **Disk usage.**
+> 1. pnpm — smallest. One global store on disk; every project links into it, so a dependency shared across ten projects is stored once, not ten times.
+> 2. yarn — moderate. Classic yarn copies into each project like npm; its newer mode is leaner.
+> 3. npm — largest. Each project gets its own full copy of every dependency.
+
+That reads the same whether you're looking or listening.
+
 **[See every answer side by side →](https://ckundo.github.io/nv-llm/)**
 
 ## A fair word about the numbers
